@@ -1,0 +1,228 @@
+export const perfumesData = [
+  {
+    id: 1,
+    name: { en: "Bianco Latte (Inspired)", ar: "بيانكو لاتي (مستوحى)" },
+    description: {
+      en: "A creamy and sweet gourmand fragrance with a cloud of vanilla, milk, and honey.",
+      ar: "عطر كريمي وحلو غني برائحة الفانيليا والحليب والعسل.",
+    },
+    category: "unisex",
+    image: "/images/bianco.jpeg",
+    notes: {
+      en: ["Caramel", "Honey", "Vanilla"],
+      ar: ["كراميل", "عسل", "فانيليا"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: true,
+    bestSeller: true,
+    priceRange: "medium",
+  },
+  {
+    id: 2,
+    name: { en: "Khamrah (Inspired)", ar: "خمرة (مستوحى)" },
+    description: {
+      en: "A warm, spicy and sweet scent reminiscent of angels' share, featuring dates and praline.",
+      ar: "رائحة دافئة وحارة وحلوة تتميز بنفحات التمر والبرالين.",
+    },
+    category: "unisex",
+    image: "/images/img4.png",
+    notes: {
+      en: ["Cinnamon", "Dates", "Praline"],
+      ar: ["قرفة", "تمر", "برالين"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: false,
+    bestSeller: false,
+    priceRange: "low",
+  },
+  {
+    id: 3,
+    name: { en: "Black Opium (Inspired)", ar: "بلاك أوبيوم (مستوحى)" },
+    description: {
+      en: "A highly addictive feminine fragrance boasting rich coffee and warm vanilla notes.",
+      ar: "عطر نسائي جذاب يتميز بنفحات القهوة الغنية والفانيليا الدافئة.",
+    },
+    category: "women",
+    image: "/images/obiom.png",
+    notes: {
+      en: ["Coffee", "White Flowers", "Vanilla"],
+      ar: ["قهوة", "زهور بيضاء", "فانيليا"],
+    },
+    type: "inspired",
+    trending: false,
+    exclusive: false,
+    bestSeller: true,
+    priceRange: "medium",
+  },
+  {
+    id: 4,
+    name: {
+      en: "Baccarat Rouge  (Inspired)",
+      ar: "باكارات روج  (مستوحى)",
+    },
+    description: {
+      en: "A luminous and sophisticated masterpiece with airy jasmine and radiant saffron.",
+      ar: "تحفة فنية مضيئة وراقية تتميز بالياسمين الخفيف والزعفران المشرق.",
+    },
+    category: "unisex",
+    image: "/images/img5.png",
+    notes: {
+      en: ["Saffron", "Amberwood", "Cedar"],
+      ar: ["زعفران", "خشب العنبر", "أرز"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: true,
+    bestSeller: true,
+    priceRange: "high",
+  },
+  {
+    id: 5,
+    name: { en: "Dior Sauvage (Inspired)", ar: "ديور سوفاج (مستوحى)" },
+    description: {
+      en: "A radically fresh masculine scent with a powerful and noble trail.",
+      ar: "عطر رجالي منعش للغاية مع أثر قوي ونبيل.",
+    },
+    category: "men",
+    image: "/images/sovage.jpeg",
+    notes: {
+      en: ["Bergamot", "Pepper", "Ambroxan"],
+      ar: ["برغموت", "فلفل", "أمبروكسان"],
+    },
+    type: "inspired",
+    trending: false,
+    exclusive: false,
+    bestSeller: true,
+    priceRange: "medium",
+  },
+  {
+    id: 6,
+    name: { en: "Creed Aventus (Inspired)", ar: "كريد أفينتوس (مستوحى)" },
+    description: {
+      en: "A bold, powerful, and iconic fragrance celebrating strength and success.",
+      ar: "عطر جريء وقوي وأيقوني يحتفل بالقوة والنجاح.",
+    },
+    category: "men",
+    image: "/images/creade.jpeg",
+    notes: {
+      en: ["Pineapple", "Birch", "Musk"],
+      ar: ["أناناس", "خشب البتولا", "مسك"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: false,
+    bestSeller: true,
+    priceRange: "high",
+  },
+  {
+    id: 7,
+    name: {
+      en: "Tom Ford Oud Wood (Inspired)",
+      ar: "توم فورد عود وود (مستوحى)",
+    },
+    description: {
+      en: "A pioneering composition of exotic woods and spices.",
+      ar: "تكوين رائد من الأخشاب الغريبة والتوابل.",
+    },
+    category: "unisex",
+    image: "/images/wood.jpeg",
+    notes: {
+      en: ["Oud", "Sandalwood", "Cardamom"],
+      ar: ["عود", "خشب الصندل", "هيل"],
+    },
+    type: "inspired",
+    trending: false,
+    exclusive: false,
+    bestSeller: false,
+    priceRange: "high",
+  },
+  {
+    id: 8,
+    name: { en: "YSL Libre (Inspired)", ar: "إيف سان لوران ليبر (مستوحى)" },
+    description: {
+      en: "A grand floral perfume for women representing freedom and bold elegance.",
+      ar: "عطر زهري فاخر للنساء يمثل الحرية والأناقة الجريئة.",
+    },
+    category: "women",
+    image: "/images/YSL.jpeg",
+    notes: {
+      en: ["Lavender", "Orange Blossom", "Vanilla Extract"],
+      ar: ["لافندر", "زهر البرتقال", "مستخلص الفانيليا"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: false,
+    bestSeller: false,
+    priceRange: "medium",
+  },
+  {
+    id: 9,
+    name: {
+      en: "Delina Parfums de Marly (Inspired)",
+      ar: "ديلينا بارفيوم دي مارلي (مستوحى)",
+    },
+    description: {
+      en: "A multi-faceted floral tribute to femininity with Turkish rose and lychee.",
+      ar: "تكريم زهري متعدد الأوجه للأنوثة مع الورد التركي والليتشي.",
+    },
+    category: "women",
+    image:
+      "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?q=80&w=400&auto=format&fit=crop",
+    notes: {
+      en: ["Rhubarb", "Turkish Rose", "Cashmeran"],
+      ar: ["راوند", "ورد تركي", "كشميران"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: false,
+    bestSeller: true,
+    priceRange: "high",
+  },
+  {
+    id: 10,
+    name: { en: "Bleu de Chanel (Inspired)", ar: "بلو دي شانيل (مستوحى)" },
+    description: {
+      en: "An aromatic-woody fragrance with a captivating and lingering trail.",
+      ar: "عطر خشبي عطري بأثر آسر يدوم طويلاً.",
+    },
+    category: "men",
+    image: "/images/blue.jpeg",
+    notes: {
+      en: ["Grapefruit", "Incense", "Ginger"],
+      ar: ["جريب فروت", "بخور", "زنجبيل"],
+    },
+    type: "inspired",
+    trending: false,
+    exclusive: false,
+    bestSeller: true,
+    priceRange: "medium",
+  },
+  {
+    id: 11,
+    name: {
+      en: "Erba Pura / Ana Abiyedh (Inspired)",
+      ar: "إيربا بورا / أنا الأبيض (مستوحى)",
+    },
+    description: {
+      en: "A vibrant and joyful fruit basket fragrance with Mediterranean citrus and warm amber.",
+      ar: "عطر حيوي ومبهج يشبه سلة الفواكه مع الحمضيات المتوسطية والعنبر الدافئ.",
+    },
+    category: "unisex",
+    image: "/images/afgano.webp", // تقدر تغير المسار بعدين
+    notes: {
+      en: ["Orange", "Lemon", "White Musk"],
+      ar: ["برتقال", "ليمون", "مسك أبيض"],
+    },
+    type: "inspired",
+    trending: true,
+    exclusive: true,
+    bestSeller: true,
+    priceRange: "low",
+  },
+];
+
+export const getTrendingPerfumes = () => perfumesData.filter((p) => p.trending);
+export const getBestSellerPerfumes = () =>
+  perfumesData.filter((p) => p.bestSeller);
