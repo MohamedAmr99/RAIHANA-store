@@ -895,7 +895,7 @@ const SettingsTab = () => {
           </p>
 
           {/* ─── Free Shipping Section ─────────────────────────────────────────── */}
-          <div className="mb-6 p-5 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl shadow-sm">
+          <div className="mb-6 p-5 bg-linear-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-200/60">
               <div>
                 <div className="flex items-center gap-2">

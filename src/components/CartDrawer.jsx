@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft } from "lucide-react";
+import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
@@ -23,20 +23,31 @@ const CartDrawer = () => {
     cartCount,
   } = useCart();
 
-  const freeShippingEnabled = Boolean(settings.freeShippingEnabled);
-  const freeShippingThreshold = Number(settings.freeShippingThreshold) || 0;
-  const isFreeShipping =
-    freeShippingEnabled &&
-    (freeShippingThreshold === 0 || cartSubtotal >= freeShippingThreshold);
+  // Memoized shipping and promotion calculations
+  const {
+    freeShippingEnabled,
+    freeShippingThreshold,
+    isFreeShipping,
+    freeShippingRemaining,
+    shippingCost,
+    total,
+  } = useMemo(() => {
+    const enabled = Boolean(settings.freeShippingEnabled);
+    const threshold = Number(settings.freeShippingThreshold) || 0;
+    const isFree = enabled && (threshold === 0 || cartSubtotal >= threshold);
+    const remaining = enabled && threshold > 0 ? Math.max(0, threshold - cartSubtotal) : 0;
+    const cost = isFree ? 0 : Number(settings.shippingFee) || 0;
+    const tot = cartSubtotal + (cart.length > 0 ? cost : 0);
 
-  const freeShippingRemaining =
-    freeShippingEnabled && freeShippingThreshold > 0
-      ? Math.max(0, freeShippingThreshold - cartSubtotal)
-      : 0;
-
-  const shippingCost = isFreeShipping ? 0 : Number(settings.shippingFee) || 0;
-  // Note: exact shipping per city is calculated at checkout after city selection
-  const total = cartSubtotal + (cart.length > 0 ? shippingCost : 0);
+    return {
+      freeShippingEnabled: enabled,
+      freeShippingThreshold: threshold,
+      isFreeShipping: isFree,
+      freeShippingRemaining: remaining,
+      shippingCost: cost,
+      total: tot,
+    };
+  }, [settings, cartSubtotal, cart.length]);
 
   const handleCheckout = () => {
     setIsCartOpen(false);
@@ -63,8 +74,8 @@ const CartDrawer = () => {
             animate={{ x: 0 }}
             exit={{ x: isRtl ? "-100%" : "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`relative ml-auto w-full max-w-md bg-[#0d0d0d] text-white shadow-2xl flex flex-col h-full border-${
-              isRtl ? "r" : "l"
+            className={`relative ml-auto w-full max-w-md bg-[#0d0d0d] text-white shadow-2xl flex flex-col h-full ${
+              isRtl ? "border-r" : "border-l"
             } border-gold/20 z-50`}
             style={{ [isRtl ? "marginRight" : "marginLeft"]: "auto" }}
           >
@@ -206,32 +217,43 @@ const CartDrawer = () => {
                     </span>
                   </div>
                   {/* Free shipping banner / progress in cart */}
-                  {freeShippingEnabled && freeShippingRemaining > 0 && (
-                    <div className="p-2.5 bg-gold/10 rounded-xl border border-gold/20 my-2">
-                      <div className="flex justify-between items-center text-[11px] font-bold text-gold mb-1.5">
+                  {freeShippingEnabled && (
+                    isFreeShipping ? (
+                      <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 my-2 shadow-xs">
+                        <Sparkles size={16} className="shrink-0 text-emerald-400" />
                         <span>
                           {lang === "ar"
-                            ? `متبقي ${freeShippingRemaining} ج.م للشحن المجاني! 🚚`
-                            : `Add ${freeShippingRemaining} EGP for FREE shipping! 🚚`}
-                        </span>
-                        <span>
-                          {Math.round(
-                            Math.min(100, (cartSubtotal / freeShippingThreshold) * 100)
-                          )}%
+                            ? "تهانينا! طلبيتك مؤهلة للشحن المجاني 🎉"
+                            : "Congratulations! Your order qualifies for free delivery 🎉"}
                         </span>
                       </div>
-                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-gold h-full rounded-full transition-all duration-300"
-                          style={{
-                            width: `${Math.min(
-                              100,
-                              (cartSubtotal / freeShippingThreshold) * 100
-                            )}%`,
-                          }}
-                        />
+                    ) : freeShippingRemaining > 0 ? (
+                      <div className="p-2.5 bg-gold/10 rounded-xl border border-gold/20 my-2">
+                        <div className="flex justify-between items-center text-[11px] font-bold text-gold mb-1.5">
+                          <span>
+                            {lang === "ar"
+                              ? `متبقي ${freeShippingRemaining} ج.م للشحن المجاني! 🚚`
+                              : `Add ${freeShippingRemaining} EGP for FREE shipping! 🚚`}
+                          </span>
+                          <span>
+                            {Math.round(
+                              Math.min(100, (cartSubtotal / freeShippingThreshold) * 100)
+                            )}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-gold h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                (cartSubtotal / freeShippingThreshold) * 100
+                              )}%`,
+                            }}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    ) : null
                   )}
 
                   {isFreeShipping ? (
