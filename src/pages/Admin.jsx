@@ -720,6 +720,13 @@ const CategoriesTab = () => {
 // ─────────────────────────────────────────
 // Settings Tab
 // ─────────────────────────────────────────
+const EGYPTIAN_GOVERNORATES = [
+  "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الغربية", "المنوفية",
+  "الشرقية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية", "السويس",
+  "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر",
+  "أسوان", "مطروح", "شمال سيناء", "جنوب سيناء", "البحر الأحمر", "الوادي الجديد",
+];
+
 const SettingsTab = () => {
   const { t } = useTranslation();
   const { settings, saveSettings } = useSettings();
@@ -738,6 +745,19 @@ const SettingsTab = () => {
   };
 
   const setF = (key, val) => setForm((p) => ({ ...p, [key]: val }));
+
+  // ─── Shipping rates helpers ───────────────────────────────────────────────────
+  const shippingRates = form.shippingRates || {};
+  const setRate = (city, val) =>
+    setForm((p) => ({
+      ...p,
+      shippingRates: { ...(p.shippingRates || {}), [city]: val === "" ? undefined : Number(val) },
+    }));
+  const setDefaultRate = (val) =>
+    setForm((p) => ({
+      ...p,
+      shippingRates: { ...(p.shippingRates || {}), default: val === "" ? undefined : Number(val) },
+    }));
 
   const fields = [
     {
@@ -815,6 +835,52 @@ const SettingsTab = () => {
             {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
           </div>
         ))}
+
+        {/* ─── Shipping Rates Section ─────────────────────────────────────────── */}
+        <div className="border-t pt-6">
+          <h3 className="text-base font-bold text-gray-800 mb-1 flex items-center gap-2">
+            🚚 أسعار الشحن لكل محافظة
+          </h3>
+          <p className="text-xs text-gray-400 mb-4">
+            اتركها فارغة لاستخدام السعر الافتراضي. السعر بالجنيه المصري.
+          </p>
+
+          {/* Default rate */}
+          <div className="flex items-center gap-3 mb-3 p-3 bg-amber-50 rounded-xl border border-amber-200">
+            <label className="text-sm font-semibold text-amber-800 w-40 shrink-0">
+              🌍 سعر افتراضي (باقي المحافظات)
+            </label>
+            <input
+              type="number"
+              min="0"
+              dir="ltr"
+              value={shippingRates["default"] ?? ""}
+              onChange={(e) => setDefaultRate(e.target.value)}
+              placeholder="80"
+              className="w-28 p-2 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm text-center"
+            />
+            <span className="text-xs text-amber-700">جنيه</span>
+          </div>
+
+          {/* Per-governorate rates grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto pr-1">
+            {EGYPTIAN_GOVERNORATES.map((gov) => (
+              <div key={gov} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border border-gray-100">
+                <label className="text-sm text-gray-700 flex-1 truncate">{gov}</label>
+                <input
+                  type="number"
+                  min="0"
+                  dir="ltr"
+                  value={shippingRates[gov] ?? ""}
+                  onChange={(e) => setRate(gov, e.target.value)}
+                  placeholder={String(shippingRates["default"] ?? "—")}
+                  className="w-20 p-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm text-center"
+                />
+                <span className="text-xs text-gray-400">ج.م</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="pt-4 border-t">
           <button

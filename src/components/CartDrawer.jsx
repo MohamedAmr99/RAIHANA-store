@@ -24,6 +24,7 @@ const CartDrawer = () => {
   } = useCart();
 
   const shippingCost = Number(settings.shippingFee) || 0;
+  // Note: exact shipping per city is calculated at checkout after city selection
   const total = cartSubtotal + (cart.length > 0 ? shippingCost : 0);
 
   const handleCheckout = () => {
@@ -201,6 +202,12 @@ const CartDrawer = () => {
                       </span>
                     </div>
                   )}
+                  {/* City-based shipping note */}
+                  <p className="text-[11px] text-gray-500 italic">
+                    {lang === "ar"
+                      ? "⚠️ سعر الشحن يُحدَّد حسب المحافظة عند الدفع"
+                      : "⚠️ Exact shipping calculated at checkout by city"}
+                  </p>
                   <div className="flex justify-between text-base font-bold pt-2 border-t border-white/10 text-white">
                     <span>{lang === "ar" ? "الإجمالي" : "Total"}</span>
                     <span className="text-gold font-serif text-lg">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -59,8 +59,13 @@ const Checkout = () => {
     subtotal = cartSubtotal;
   }
 
-  const shippingCost = Number(settings.shippingFee) || 0;
-  const totalAmount = subtotal + (orderItems.length > 0 ? shippingCost : 0);
+  // ─── Egyptian Governorates ───────────────────────────────────────────────────
+  const EGYPTIAN_GOVERNORATES = [
+    "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الغربية", "المنوفية",
+    "الشرقية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية", "السويس",
+    "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر",
+    "أسوان", "مطروح", "شمال سيناء", "جنوب سيناء", "البحر الأحمر", "الوادي الجديد",
+  ];
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,6 +74,19 @@ const Checkout = () => {
     city: "",
     notes: "",
   });
+
+  // ─── Reactive shipping cost based on selected city ───────────────────────────
+  const shippingCost = useMemo(() => {
+    if (!formData.city) return Number(settings.shippingFee) || 0;
+    const rates = settings.shippingRates || {};
+    const cityRate = rates[formData.city];
+    if (cityRate !== undefined) return Number(cityRate);
+    const defaultRate = rates["default"];
+    if (defaultRate !== undefined) return Number(defaultRate);
+    return Number(settings.shippingFee) || 0;
+  }, [formData.city, settings]);
+
+  const totalAmount = subtotal + (orderItems.length > 0 ? shippingCost : 0);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [lastOrderDetails, setLastOrderDetails] = useState(null);
@@ -108,6 +126,11 @@ const Checkout = () => {
         ...payload,
         customerName: formData.name,
         customerPhone: formData.phone,
+        snapshotTotal: Number(totalAmount),
+        snapshotSubtotal: Number(subtotal),
+        snapshotShipping: Number(shippingCost),
+        snapshotCity: formData.city,
+        snapshotItems: [...orderItems],
       });
 
       if (!isDirectCheckout) {
@@ -178,8 +201,15 @@ const Checkout = () => {
   }
 
   if (success && lastOrderDetails) {
+    // Use snapshotted values captured at submit time (avoids stale-closure "0" bug)
+    const displayTotal    = lastOrderDetails.snapshotTotal    ?? lastOrderDetails.totalAmount ?? 0;
+    const displaySubtotal = lastOrderDetails.snapshotSubtotal ?? lastOrderDetails.subtotal    ?? 0;
+    const displayShipping = lastOrderDetails.snapshotShipping ?? lastOrderDetails.shippingCost ?? 0;
+    const displayCity     = lastOrderDetails.snapshotCity     ?? lastOrderDetails.city         ?? "";
+    const displayItems    = lastOrderDetails.snapshotItems    ?? orderItems;
+
     // Generate WhatsApp confirmation message for customer convenience
-    const itemsText = orderItems
+    const itemsText = displayItems
       .map(
         (it) =>
           `• ${lang === "ar" ? it.nameAr : it.nameEn} ${
@@ -190,8 +220,8 @@ const Checkout = () => {
 
     const whatsappSummary =
       lang === "ar"
-        ? `مرحباً ريحانة ستور، قمت بعمل طلب جديد:\n\n👤 الاسم: ${formData.name}\n📱 الهاتف: ${formData.phone}\n📍 العنوان: ${formData.address}\n\n🛍️ المنتجات:\n${itemsText}\n\n💵 الإجمالي: ${totalAmount} جنيه مصري.`
-        : `Hello RAIHANA Store, I placed a new order:\n\n👤 Name: ${formData.name}\n📱 Phone: ${formData.phone}\n📍 Address: ${formData.address}\n\n🛍️ Items:\n${itemsText}\n\n💵 Total: ${totalAmount} EGP.`;
+        ? `مرحباً ريحانة ستور، قمت بعمل طلب جديد:\n\n👤 الاسم: ${formData.name}\n📱 الهاتف: ${formData.phone}\n📍 العنوان: ${formData.address}\n🏙️ المدينة: ${displayCity}\n\n🛍️ المنتجات:\n${itemsText}\n\n🚚 الشحن: ${displayShipping} جنيه\n💵 الإجمالي: ${displayTotal} جنيه مصري.`
+        : `Hello RAIHANA Store, I placed a new order:\n\n👤 Name: ${formData.name}\n📱 Phone: ${formData.phone}\n📍 Address: ${formData.address}\n🏙️ City: ${displayCity}\n\n🛍️ Items:\n${itemsText}\n\n🚚 Shipping: ${displayShipping} EGP\n💵 Total: ${displayTotal} EGP.`;
 
     return (
       <div className="min-h-screen pt-32 pb-16 px-4 bg-warm-white flex items-center justify-center">
@@ -215,13 +245,27 @@ const Checkout = () => {
           </p>
 
           <div className="bg-warm-white/70 p-4 rounded-2xl border border-dark/5 text-left mb-6 text-sm" dir={isRtl ? "rtl" : "ltr"}>
-            <div className="flex justify-between font-bold text-dark border-b border-dark/10 pb-2 mb-2">
-              <span>{lang === "ar" ? "قيمة الطلب الإجمالية:" : "Total Order Amount:"}</span>
-              <span className="text-gold">{totalAmount} {lang === "ar" ? "جنيه" : "EGP"}</span>
+            {/* Subtotal row */}
+            <div className="flex justify-between text-gray-500 mb-1">
+              <span>{lang === "ar" ? "المجموع الفرعي:" : "Subtotal:"}</span>
+              <span className="font-semibold text-dark">{displaySubtotal} {lang === "ar" ? "جنيه" : "EGP"}</span>
             </div>
-            <p className="text-xs text-gray-500">
+            {/* Shipping row */}
+            <div className="flex justify-between text-gray-500 mb-2 pb-2 border-b border-dark/10">
+              <span>
+                {lang === "ar" ? "الشحن" : "Shipping"}
+                {displayCity ? ` (${displayCity})` : ""}:
+              </span>
+              <span className="font-semibold text-dark">{displayShipping} {lang === "ar" ? "جنيه" : "EGP"}</span>
+            </div>
+            {/* Total row */}
+            <div className="flex justify-between font-bold text-dark">
+              <span>{lang === "ar" ? "قيمة الطلب الإجمالية:" : "Total Order Amount:"}</span>
+              <span className="text-gold">{displayTotal} {lang === "ar" ? "جنيه" : "EGP"}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
               {lang === "ar" ? "عدد الأصناف: " : "Items count: "}
-              {orderItems.reduce((acc, it) => acc + it.quantity, 0)}
+              {displayItems.reduce((acc, it) => acc + it.quantity, 0)}
             </p>
           </div>
 
@@ -383,17 +427,28 @@ const Checkout = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {lang === "ar" ? "المحافظة / المدينة" : "City / Governorate"}
+                      {lang === "ar" ? "المحافظة / المدينة *" : "City / Governorate *"}
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="city"
-                      maxLength={50}
+                      required
                       value={formData.city}
                       onChange={handleChange}
                       className="w-full p-3 md:p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold bg-warm-white/30 text-sm"
-                      placeholder={lang === "ar" ? "مثال: القاهرة، الجيزة..." : "e.g. Cairo"}
-                    />
+                    >
+                      <option value="">{lang === "ar" ? "— اختر المحافظة —" : "— Select Governorate —"}</option>
+                      {EGYPTIAN_GOVERNORATES.map((gov) => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                    {/* Show shipping cost preview once city is selected */}
+                    {formData.city && (
+                      <p className="text-xs text-gold mt-1 font-medium">
+                        {lang === "ar"
+                          ? `🚚 رسوم الشحن إلى ${formData.city}: ${shippingCost} جنيه`
+                          : `🚚 Shipping to ${formData.city}: ${shippingCost} EGP`}
+                      </p>
+                    )}
                   </div>
 
                   <div>
