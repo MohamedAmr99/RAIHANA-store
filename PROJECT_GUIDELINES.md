@@ -31,20 +31,19 @@ RAIHANA Store VR 2/
 ├── firestore.rules          # قواعد الأمان الصارمة لقاعدة البيانات (مغلقة إلا للأدمن)
 ├── jsconfig.json            # إعدادات لغة JavaScript و JSX لمحرر VS Code
 ├── package.json             # الاعتماديات ومكتبات المشروع
+├── PROJECT_GUIDELINES.md    # هذا الملف — المرجع الشامل للمشروع
 ├── public/                  # الصور الثابتة، مقاطع الفيديو والخطوط
 │   ├── images/
-│   │   ├── فواحات/
-│   │   └── ...
 │   └── videos/
 └── src/
     ├── App.jsx              # نقطة الربط والتوجيه (Router) وحاوي السلة CartProvider
     ├── firebase.js          # تهيئة الاتصال بخدمات Firebase
-    ├── components/          # المكونات المشتركة القابلة لإعادة الاستخدام
+    ├── components/
     │   ├── Navbar.jsx       # شريط التنقل مع أيقونة السلة التفاعلية ومحول اللغة
     │   ├── Hero.jsx         # الواجهة الرئيسية مع الفيديو المحسن
     │   ├── ProductCard.jsx  # كارت عرض المنتج (عرض السعر الأقل، إضافة للسلة، التفاصيل)
     │   ├── CartDrawer.jsx   # درج السلة المنزلق مع التحكم في الكميات وحساب الشحن
-    │   └── ProtectedRoute.jsx # حماية لوحة التحكم واشتراط تسجيل الدخول الرسمي
+    │   └── ProtectedRoute.jsx
     ├── context/
     │   └── CartContext.jsx  # إدارة حالة السلة وحفظها تلقائياً في LocalStorage
     ├── data/
@@ -53,13 +52,13 @@ RAIHANA Store VR 2/
     │   ├── usePerfumes.js   # جلب منتجات العطور لحظياً من Firestore مع Fallback محلي
     │   └── useSettings.js   # جلب إعدادات المتجر (الهاتف، الشحن، رسائل الواتساب)
     ├── i18n/                # ملفات الترجمة (ar.json / en.json)
-    └── pages/               # الصفحات الرئيسية
-        ├── Home.jsx         # الصفحة الرئيسية (الأكثر مبيعاً، الجديد، الحصري)
-        ├── Perfumes.jsx     # صفحة كل العطور مع الفلاتر
-        ├── ProductDetails.jsx # تفاصيل المنتج (اختيار الحجم، السعر، النوتات العطرية)
-        ├── Checkout.jsx     # إتمام الطلب (يدعم شراء السلة كاملة أو شراء سريع لمنتج)
-        ├── Admin.jsx        # لوحة التحكم الكاملة (إدارة المنتجات، الأسعار، الطلبات)
-        └── Login.jsx        # صفحة تسجيل دخول الأدمن الموثق
+    └── pages/
+        ├── Home.jsx
+        ├── Perfumes.jsx
+        ├── ProductDetails.jsx
+        ├── Checkout.jsx     # إتمام الطلب — يدعم سلة كاملة أو شراء سريع لمنتج
+        ├── Admin.jsx        # لوحة التحكم — إدارة المنتجات والأسعار والطلبات والشحن
+        └── Login.jsx
 ```
 
 ---
@@ -68,61 +67,245 @@ RAIHANA Store VR 2/
 
 1. **الوصول للوحة الأدمن (`isAdmin`):**
    * لا يُقبل أي مستخدم مجهول أو تسجيل عشوائي.
-   * القواعد في `firestore.rules` مقفولة بالكامل وتتحقق حصرياً من القائمة البيضاء للبريد الإلكتروني:
-     ```text
-     - amohamedamr99@gmail.com
-     - admin@store.com
+   * القائمة البيضاء محددة في `firestore.rules`:
      ```
-2. **المنتجات (`perfumes`):**
-   * **القراءة:** مفتوحة لجميع الزوار (`allow read: if true`).
-   * **الإضافة والتعديل والحذف:** محصورة حصرياً للأدمن الموثق (`allow write: if isAdmin()`).
-3. **الطلبات (`orders`):**
-   * **إنشاء الطلب:** متاح للعميل بشروط أمان مشددة (حد أقصى للحقول، التحقق من نوع البيانات، الحالة الابتدائية إجبارياً `Pending`).
-   * **قراءة وتعديل الطلبات:** حصرياً للأدمن لحماية خصوصية بيانات وهوية العملاء.
+     amohamedamr99@gmail.com
+     admin@store.com
+     ```
+2. **المنتجات (`perfumes`):** القراءة مفتوحة، الكتابة للأدمن فقط.
+3. **الطلبات (`orders`):** الإنشاء متاح للعملاء بشروط أمان مشددة (حالة `Pending` إجبارية)، القراءة والتعديل للأدمن فقط.
+4. **لا `isDev` bypass:** يجب دائماً التحقق من `auth.currentUser` ومطابقته لـ `ALLOWED_ADMINS`.
 
 ---
 
-## 🛒 5. قواعد العمل في المتجر وسير السلة (Business Logic)
+## 🛒 5. قواعد العمل في المتجر (Business Logic)
 
 ### أ. نظام التسعير والأحجام:
-* العطور الرجالية والنسائية والـ Unisex لها حجمان: **50ML** و **100ML**.
-* لكل حجم سعره المستقل في حقل `sizePrices`:
-  ```json
-  "sizePrices": { "50ML": 550, "100ML": 850 }
-  ```
-* **في كارت المنتج (`ProductCard`):** يُعرض دائماً **السعر الأقل** (سعر 50ML) مصحوباً بعبارة "يبدأ من" إن وجد أكثر من حجم.
-* **في صفحة المنتج (`ProductDetails`):** يتم تحديد حجم 50ML وسعره تلقائياً كخيار افتراضي، ويتغير السعر لحظياً فور اختيار 100ML.
+* لكل عطر حجمان: **50ML** و **100ML**، كل منهما بسعر مستقل في `sizePrices`.
+* `ProductCard`: يعرض السعر الأقل بدون نص إضافي.
+* `ProductDetails`: الحجم والسعر الافتراضي = 50ML، يتغير لحظياً باختيار المستخدم.
 
-### ب. سلوك سلة المشتريات (`CartContext`):
-* الضغط على زر "أضف للسلة" من الكارت يضيف المنتج بكمية `1` إذا لم يكن موجوداً.
-* إذا كان المنتج موجوداً مسبقاً، الضغط على الزر **يفتح السلة فقط** ولا يكرر الكمية.
-* **الزيادة والنقصان:** تتم حصرياً من خلال زري `+` و `-` في قائمة السلة المنزلقة.
-* سلة المشتريات محفوظة بشكل دائم في الـ `localStorage` للعميل.
+### ب. سلوك سلة المشتريات:
+* "أضف للسلة" من الكارت: يُضيف مرة واحدة فقط — إذا وُجد المنتج مسبقاً يفتح السلة ولا يكرر الكمية.
+* الزيادة والنقصان: عبر `+` و `-` في السلة فقط.
+* السلة محفوظة في `localStorage`.
 
 ### ج. إتمام الطلب (`Checkout`):
-* يدعم حالتين بسلاسة:
-  1. **طلب السلة كاملة (`/checkout`):** يحسب إجمالي كل المنتجات + مصاريف الشحن المستدعاة من إعدادات الأدمن.
-  2. **طلب سريع فردي (`/checkout/:id`):** شراء فوري لعطر محدد بحجمه المختار.
-* بعد نجاح تسجيل الطلب في قاعدة البيانات، يتوفر زر تحويل فوري لمحادثة واتساب المتجر لتأكيد الطلب مع الأدمن.
+* يدعم: طلب السلة كاملة (`/checkout`) أو شراء سريع (`/checkout/:id?size=X`).
+* حقل المحافظة: قائمة منسدلة بـ 25 محافظة مصرية (إجبارية).
+* الشحن يُحسب ديناميكياً بحسب المحافظة المختارة.
+
+### د. نظام أسعار الشحن المحافظاتي:
+* مخزّن في Firestore `settings/store` حقل `shippingRates` (map).
+* أولوية الحساب:
+  ```
+  shippingRates[المحافظة]  →  shippingRates.default  →  shippingFee  (fallback)
+  ```
+* يُدار من Admin → تبويب الإعدادات → "أسعار الشحن لكل محافظة".
 
 ---
 
-## ⚙️ 6. قواعد وقوانين التطوير الصارمة (Development & Testing Protocol)
+## ⚙️ 6. بروتوكول التطوير والاختبار (Testing Protocol)
 
-لتجنب أي أعطال أو أخطاء برمجية أثناء العمل:
-1. **قاعدة فحص TypeScript و JSX:**
-   * يجب الحفاظ على ملف `jsconfig.json` في جذر المشروع.
-   * تشغيل الفحص قبل أي تسليم:
-     ```bash
-     npx tsc -p jsconfig.json --noEmit
-     ```
-2. **قاعدة البناء الإلزامي (Build Verification Gate):**
-   * لا يعتبر أي كود مكتملاً إلا بعد تنفيذ واجتياز أمر:
-     ```bash
-     npm run build
-     ```
-   * والتأكد من خروج كود الحالة `0` بنجاح بدون أخطاء.
-3. **قاعدة عدم كسر المسارات والبيانات:**
-   * الحفاظ على امتدادات وأسماء ملفات الصور القديمة كما هي في المجلدات لتفادي كسر الروابط المسجلة مسبقاً في Firestore.
-   * دعم الحقول القديمة والجديدة لضمان استقرار التطبيق (*Backward Compatibility*).
+**قبل أي commit:**
+```bash
+# 1. فحص TypeScript
+npx tsc -p jsconfig.json --noEmit   # يجب أن يخرج 0 أخطاء
 
+# 2. بناء الإنتاج
+npm run build                        # يجب أن يخرج بـ exit code 0 و "✓ built"
+```
+
+**قواعد إضافية:**
+* الحفاظ على أسماء وامتدادات الملفات القديمة (لا تكسر روابط Firestore).
+* دعم الحقول القديمة والجديدة معاً (*Backward Compatibility*).
+* استخدام Conventional Commits: `feat:` / `fix:` / `refactor:` / `chore:` / `docs:`.
+
+---
+
+## 🧠 7. الدروس المستفادة من الأخطاء (Lessons Learned Log)
+
+> هذا القسم يُحدَّث تلقائياً بعد كل إصلاح جوهري.
+
+---
+
+### 🔴 BUG-01: "صفحة النجاح تعرض 0 جنيه"
+**الملف:** `Checkout.jsx`
+
+**السبب — Stale Closure Bug:**
+بعد `setSuccess(true)` يُعاد رسم الكومبوننت. في هذه اللحظة:
+- `clearCart()` يُفرغ السلة → `cart = []` → `cartSubtotal = 0`.
+- `orderItems` وكل القيم المشتقة منها تصبح `[]` و `0`.
+- صفحة النجاح كانت تقرأ من هذه المتغيرات الحية بدلاً من القيم وقت الإرسال.
+
+**الحل — Snapshot Pattern:**
+حفظ نسخة ثابتة من كل القيم لحظة الضغط على "تأكيد الطلب":
+```js
+setLastOrderDetails({
+  ...payload,
+  snapshotTotal:    Number(totalAmount),
+  snapshotSubtotal: Number(subtotal),
+  snapshotShipping: Number(shippingCost),
+  snapshotCity:     formData.city,
+  snapshotItems:    [...orderItems],  // ← spread لعمل نسخة مستقلة
+});
+```
+صفحة النجاح تقرأ حصرياً من `lastOrderDetails.snapshotX`.
+
+**القاعدة المستفادة:**
+> ✅ أي قيمة يجب أن تظهر **بعد** حدث (submit / success) يجب تخزينها في state منفصل وقت الحدث، وليس قراءتها من متغيرات قابلة للتغير لاحقاً.
+
+---
+
+### 🔴 BUG-02: تكرار الكمية عند الضغط مرتين على "أضف للسلة"
+**الملف:** `CartContext.jsx`
+
+**السبب:** `addToCart` كانت تزيد الكمية دائماً بغض النظر عن وجود المنتج.
+
+**الحل:**
+```js
+const addToCart = (item) => {
+  setCart((prev) => {
+    const exists = prev.find(
+      (i) => i.productId === item.productId && i.size === item.size
+    );
+    if (exists) {
+      setIsCartOpen(true);
+      return prev; // لا تعدّل الكمية
+    }
+    return [...prev, { ...item, quantity: 1 }];
+  });
+  setIsCartOpen(true);
+};
+```
+
+**القاعدة المستفادة:**
+> ✅ دالة `addToCart`: تضيف فقط عند الغياب، تفتح السلة فقط عند التكرار.
+
+---
+
+### 🔴 BUG-03: ESLint `react-refresh/only-export-components`
+**الملف:** `CartContext.jsx`
+
+**السبب:** تصدير `useCart` (hook عادي) من نفس ملف يصدّر Component يُربك React Fast Refresh.
+
+**الحل:**
+```js
+// eslint-disable-next-line react-refresh/only-export-components
+export const useCart = () => { ... };
+```
+
+---
+
+### 🔴 BUG-04: تحذيرات VS Code الحمراء (false positives) في JSX
+**السبب:** غياب `jsconfig.json` → VS Code لا يتعرف على JSX.
+
+**الحل:** إنشاء `jsconfig.json` في جذر المشروع:
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": { "@/*": ["src/*"] }
+  },
+  "include": ["src"]
+}
+```
+
+---
+
+### 🔴 BUG-05: ثغرة أمنية — تجاوز فحص الأدمن بـ `isDev`
+**الملف:** `Admin.jsx`
+
+**السبب:** شرط `isDev` كان يتجاوز `auth.currentUser` في بعض الـ listeners.
+
+**الحل:** حذف `isDev` بالكامل، الاعتماد فقط على `auth.currentUser` وقائمة `ALLOWED_ADMINS`.
+
+**القاعدة المستفادة:**
+> ✅ لا يوجد bypass لأي فحص أمني في أي بيئة، حتى في Development.
+
+---
+
+### 🟡 PERF-01: ثابت كبير داخل الكومبوننت
+**الملف:** `Checkout.jsx`
+
+**المشكلة:** `EGYPTIAN_GOVERNORATES` (25 عنصر) كانت تُنشأ من جديد في **كل render**.
+
+**الحل:** نقل الثوابت الكبيرة لمستوى الـ module (خارج الكومبوننت):
+```js
+// ✅ مرة واحدة عند تحميل الملف
+const EGYPTIAN_GOVERNORATES = ["القاهرة", ...];
+
+const Checkout = () => {
+  // ❌ كانت هنا — خطأ
+};
+```
+
+**القاعدة المستفادة:**
+> ✅ أي مصفوفة أو كائن ثابت لا يعتمد على props/state → ضعه **خارج** الكومبوننت على مستوى الـ module.
+
+---
+
+### 🟡 PERF-02: حساب قوائم الطلب بـ `useMemo`
+**الملف:** `Checkout.jsx`
+
+**المشكلة:** `orderItems` و `subtotal` كانتا بـ `let` خام → تُعاد حسابهما في كل render حتى لو لم يتغير `cart`.
+
+**الحل:**
+```js
+const { orderItems, subtotal } = useMemo(() => {
+  if (isDirectCheckout && singleProduct) {
+    // ... direct checkout logic
+    return { orderItems: [...], subtotal: itemPrice };
+  }
+  const items = cart.map((item) => ({ ... }));
+  return { orderItems: items, subtotal: cartSubtotal };
+}, [isDirectCheckout, singleProduct, directSize, cart, cartSubtotal]);
+```
+
+**القاعدة المستفادة:**
+> ✅ أي حساب مشتق من props/state ويُستخدم في الـ render → استخدم `useMemo` مع dependencies صحيحة.
+
+---
+
+### 🟡 PERF-03: دوال الأحداث بـ `useCallback`
+**الملف:** `Checkout.jsx`
+
+**المشكلة:** `handleChange` و `handleSubmit` كدوال عادية → تُنشأ من جديد في كل render.
+
+**الحل:**
+```js
+// handleChange — لا تحتاج dependencies (تستخدم functional updater)
+const handleChange = useCallback((e) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({ ...prev, [name]: value }));
+}, []);
+
+// handleSubmit — تحتاج dependencies لأنها تقرأ من scope
+const handleSubmit = useCallback(async (e) => {
+  // ...
+}, [orderItems, subtotal, shippingCost, totalAmount, formData, isDirectCheckout, clearCart, lang]);
+```
+
+**القاعدة المستفادة:**
+> ✅ دوال الأحداث (`handleX`) المُمررة لعناصر JSX → استخدم `useCallback`.
+> ✅ إذا كانت الدالة تستخدم `setX((prev) => ...)` بدلاً من `x` مباشرة، فهي لا تحتاج dependencies.
+
+---
+
+### 🟡 TAILWIND-01: كلاسات Arbitrary Values
+**الملف:** `Admin.jsx`
+
+**المشكلة:** استخدام `min-w-[700px]`, `z-[100]` بدلاً من القيم القياسية.
+
+**الحل:** استبدالها بالكلاسات المكافئة في Tailwind v4:
+| Arbitrary | Standard |
+|-----------|----------|
+| `min-w-[700px]` | `min-w-175` |
+| `min-w-[800px]` | `min-w-200` |
+| `min-w-[220px]` | `min-w-55` |
+| `z-[100]` | `z-100` |
+
+**القاعدة المستفادة:**
+> ✅ في Tailwind v4 — تحقق دائماً من وجود كلاس قياسي قبل استخدام الـ arbitrary value `[]`.
