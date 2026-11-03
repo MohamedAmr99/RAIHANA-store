@@ -23,7 +23,9 @@ export const CartProvider = ({ children }) => {
   }, [cart]);
 
   // Add item with size and quantity
-  const addToCart = (product, size = "", quantity = 1) => {
+  // If item already in cart and user clicks "Add to Cart", just open cart without incrementing again.
+  // Quantity incrementing is done strictly from the [+] button inside the drawer or by passing incrementIfExists=true.
+  const addToCart = (product, size = "", quantity = 1, incrementIfExists = false) => {
     if (!product) return;
 
     // Calculate price for the selected size if sizePrices exists
@@ -38,6 +40,10 @@ export const CartProvider = ({ children }) => {
       const existingIndex = prevCart.findIndex((item) => item.cartItemId === uniqueId);
 
       if (existingIndex > -1) {
+        if (!incrementIfExists) {
+          // Keep existing quantity, just ensure price is updated
+          return prevCart;
+        }
         const updated = [...prevCart];
         updated[existingIndex] = {
           ...updated[existingIndex],

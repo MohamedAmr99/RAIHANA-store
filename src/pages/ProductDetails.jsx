@@ -37,7 +37,15 @@ const ProductDetails = () => {
   const defaultSizes = ["men", "women", "unisex"].includes(product?.category)
     ? ["50ML", "100ML"]
     : [];
-  const sizes = useMemo(() => product?.sizes || defaultSizes, [product]);
+  const sizes = useMemo(() => {
+    const list = product?.sizes || defaultSizes;
+    // Always show smaller size first (50ML before 100ML)
+    return [...list].sort((a, b) => {
+      const numA = parseInt(a, 10) || 0;
+      const numB = parseInt(b, 10) || 0;
+      return numA - numB;
+    });
+  }, [product, defaultSizes]);
 
   useEffect(() => {
     if (product) {

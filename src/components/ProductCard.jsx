@@ -15,13 +15,26 @@ const ProductCard = ({ product }) => {
   const productName = product?.name?.[lang] || "";
   const productDesc = product?.description?.[lang] || "";
 
-  const defaultSize = ["men", "women", "unisex"].includes(product?.category)
-    ? product?.sizes?.[0] || "50ML"
-    : "";
+  // Determine the default size and price (always show the minimum starting price)
+  let displayPrice = product?.price ? Number(product.price) : null;
+  let hasMultiplePrices = false;
 
-  const displayPrice = product?.sizePrices
-    ? product.sizePrices[defaultSize] || product.price
-    : product?.price;
+  if (product?.sizePrices && Object.keys(product.sizePrices).length > 0) {
+    const validPrices = Object.values(product.sizePrices)
+      .map(Number)
+      .filter((p) => !isNaN(p) && p > 0);
+    if (validPrices.length > 0) {
+      displayPrice = Math.min(...validPrices);
+      hasMultiplePrices = validPrices.length > 1;
+    }
+  }
+
+  // Pick the size that corresponds to the minimum/default price
+  const defaultSize = ["men", "women", "unisex"].includes(product?.category)
+    ? (product?.sizePrices?.["50ML"]
+        ? "50ML"
+        : product?.sizes?.[0] || "50ML")
+    : "";
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
@@ -67,7 +80,7 @@ const ProductCard = ({ product }) => {
 
           {displayPrice && (
             <div className="text-gold font-bold text-lg mb-4">
-              {product?.sizePrices && Object.keys(product.sizePrices).length > 1 && (
+              {hasMultiplePrices && (
                 <span className="text-xs font-normal text-gray-400 block mb-0.5">
                   {lang === "ar" ? "يبدأ من" : "Starting from"}
                 </span>
