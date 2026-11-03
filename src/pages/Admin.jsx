@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../firebase";
@@ -844,6 +844,58 @@ const SettingsTab = () => {
           <p className="text-xs text-gray-400 mb-4">
             اتركها فارغة لاستخدام السعر الافتراضي. السعر بالجنيه المصري.
           </p>
+
+          {/* ─── Free Shipping Toggle ─────────────────────────────────────────── */}
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h4 className="font-bold text-green-800 text-sm">🎉 التوصيل المجاني</h4>
+                <p className="text-xs text-green-600 mt-0.5">
+                  عند التفعيل يظهر "توصيل مجاني" للعملاء المؤهلين
+                </p>
+              </div>
+              {/* Toggle Switch */}
+              <button
+                type="button"
+                onClick={() => setF("freeShippingEnabled", !form.freeShippingEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+                  form.freeShippingEnabled ? "bg-green-500" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-300 ${
+                    form.freeShippingEnabled ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Threshold input — only shown when enabled */}
+            {form.freeShippingEnabled && (
+              <div className="flex items-center gap-3 mt-2 pt-3 border-t border-green-200">
+                <label className="text-sm font-semibold text-green-800 shrink-0">
+                  الحد الأدنى للطلب:
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  dir="ltr"
+                  value={form.freeShippingThreshold ?? ""}
+                  onChange={(e) =>
+                    setF("freeShippingThreshold", e.target.value === "" ? 0 : Number(e.target.value))
+                  }
+                  placeholder="0"
+                  className="w-28 p-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-sm text-center"
+                />
+                <span className="text-xs text-green-700">جنيه</span>
+                <p className="text-xs text-green-600">
+                  {Number(form.freeShippingThreshold) === 0
+                    ? "✅ مجاني لجميع الطلبات"
+                    : `الطلبات فوق ${form.freeShippingThreshold} جنيه = شحن مجاني`}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Default rate */}
           <div className="flex items-center gap-3 mb-3 p-3 bg-amber-50 rounded-xl border border-amber-200">

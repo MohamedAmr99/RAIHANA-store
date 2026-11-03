@@ -77,16 +77,32 @@ const Checkout = () => {
     notes: "",
   });
 
-  // ─── Reactive shipping cost based on selected city ───────────────────────────
+  // ─── Reactive shipping cost — with free-shipping logic ──────────────────────
   const shippingCost = useMemo(() => {
+    // 1. Free shipping: if enabled AND subtotal >= threshold (0 threshold = always free)
+    if (settings.freeShippingEnabled) {
+      const threshold = Number(settings.freeShippingThreshold) || 0;
+      if (subtotal >= threshold) return 0;
+    }
+    // 2. No city selected → fall back to flat shippingFee
     if (!formData.city) return Number(settings.shippingFee) || 0;
+    // 3. Per-city rate lookup
     const rates = settings.shippingRates || {};
     const cityRate = rates[formData.city];
     if (cityRate !== undefined) return Number(cityRate);
     const defaultRate = rates["default"];
     if (defaultRate !== undefined) return Number(defaultRate);
     return Number(settings.shippingFee) || 0;
-  }, [formData.city, settings]);
+  }, [formData.city, settings, subtotal]);
+
+  // Helper: how much more to spend to unlock free shipping
+  const freeShippingRemaining = useMemo(() => {
+    if (!settings.freeShippingEnabled) return null;
+    const threshold = Number(settings.freeShippingThreshold) || 0;
+    if (threshold === 0) return 0; // already free for all
+    const remaining = threshold - subtotal;
+    return remaining > 0 ? remaining : 0;
+  }, [settings.freeShippingEnabled, settings.freeShippingThreshold, subtotal]);
 
   const totalAmount = subtotal + (orderItems.length > 0 ? shippingCost : 0);
   const [submitting, setSubmitting] = useState(false);
@@ -260,7 +276,13 @@ const Checkout = () => {
                 {lang === "ar" ? "الشحن" : "Shipping"}
                 {displayCity ? ` (${displayCity})` : ""}:
               </span>
-              <span className="font-semibold text-dark">{displayShipping} {lang === "ar" ? "جنيه" : "EGP"}</span>
+              {displayShipping === 0 ? (
+                <span className="font-bold text-green-600">
+                  {lang === "ar" ? "🎉 مجاناً" : "🎉 Free"}
+                </span>
+              ) : (
+                <span className="font-semibold text-dark">{displayShipping} {lang === "ar" ? "جنيه" : "EGP"}</span>
+              )}
             </div>
             {/* Total row */}
             <div className="flex justify-between font-bold text-dark">
@@ -369,12 +391,44 @@ const Checkout = () => {
                   <span>{lang === "ar" ? "المجموع الفرعي" : "Subtotal"}</span>
                   <span className="font-semibold text-dark">{subtotal} {lang === "ar" ? "ج.م" : "EGP"}</span>
                 </div>
-                {shippingCost > 0 && (
-                  <div className="flex justify-between text-gray-500">
-                    <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
+                <div className="flex justify-between text-gray-500">
+                  <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
+                  {shippingCost === 0 ? (
+                    <span className="font-bold text-green-600">
+                      {lang === "ar" ? "🎉 مجاناً" : "🎉 Free"}
+                    </span>
+                  ) : (
                     <span className="font-semibold text-dark">{shippingCost} {lang === "ar" ? "ج.م" : "EGP"}</span>
+                  )}
+                </div>
+
+                {/* Free shipping progress bar */}
+                {freeShippingRemaining !== null && freeShippingRemaining > 0 && (
+                  <div className="pt-1">
+                    <p className="text-[10px] text-amber-600 font-medium mb-1">
+                      {lang === "ar"
+                        ? `أضف ${freeShippingRemaining} ج.م للحصول على شحن مجاني 🚚`
+                        : `Add ${freeShippingRemaining} EGP for free shipping 🚚`}
+                    </p>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className="bg-gold h-1.5 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            (subtotal / Number(settings.freeShippingThreshold)) * 100
+                          )}%`,
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
+                {freeShippingRemaining === 0 && settings.freeShippingEnabled && (
+                  <p className="text-[10px] text-green-600 font-medium">
+                    {lang === "ar" ? "✅ تهانينا! حصلت على شحن مجاني" : "✅ You unlocked free shipping!"}
+                  </p>
+                )}
+
                 <div className="flex justify-between items-center pt-2 border-t border-gray-100 text-sm font-bold">
                   <span className="text-dark">{lang === "ar" ? "الإجمالي الكلي" : "Total"}</span>
                   <span className="text-gold font-serif text-lg">
@@ -447,10 +501,20 @@ const Checkout = () => {
                     </select>
                     {/* Show shipping cost preview once city is selected */}
                     {formData.city && (
-                      <p className="text-xs text-gold mt-1 font-medium">
-                        {lang === "ar"
-                          ? `🚚 رسوم الشحن إلى ${formData.city}: ${shippingCost} جنيه`
-                          : `🚚 Shipping to ${formData.city}: ${shippingCost} EGP`}
+                      <p className="text-xs mt-1 font-medium">
+                        {shippingCost === 0 ? (
+                          <span className="text-green-600">
+                            {lang === "ar"
+                              ? `🎉 التوصيل إلى ${formData.city} مجاناً!`
+                              : `🎉 Free delivery to ${formData.city}!`}
+                          </span>
+                        ) : (
+                          <span className="text-gold">
+                            {lang === "ar"
+                              ? `🚚 رسوم الشحن إلى ${formData.city}: ${shippingCost} جنيه`
+                              : `🚚 Shipping to ${formData.city}: ${shippingCost} EGP`}
+                          </span>
+                        )}
                       </p>
                     )}
                   </div>

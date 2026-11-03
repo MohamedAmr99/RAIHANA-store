@@ -7,7 +7,7 @@ import { useCart } from "../context/CartContext";
 import { useSettings } from "../hooks/useSettings";
 
 const CartDrawer = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const navigate = useNavigate();
   const lang = i18n.language || "en";
   const isRtl = lang === "ar";
@@ -23,7 +23,19 @@ const CartDrawer = () => {
     cartCount,
   } = useCart();
 
-  const shippingCost = Number(settings.shippingFee) || 0;
+  const isFreeShipping = Boolean(
+    settings.freeShippingEnabled &&
+      (Number(settings.freeShippingThreshold) === 0 ||
+        cartSubtotal >= (Number(settings.freeShippingThreshold) || 0))
+  );
+
+  const freeShippingThreshold = Number(settings.freeShippingThreshold) || 0;
+  const freeShippingRemaining =
+    settings.freeShippingEnabled && freeShippingThreshold > 0
+      ? Math.max(0, freeShippingThreshold - cartSubtotal)
+      : 0;
+
+  const shippingCost = isFreeShipping ? 0 : Number(settings.shippingFee) || 0;
   // Note: exact shipping per city is calculated at checkout after city selection
   const total = cartSubtotal + (cart.length > 0 ? shippingCost : 0);
 
@@ -194,20 +206,51 @@ const CartDrawer = () => {
                       {cartSubtotal} {lang === "ar" ? "جنيه" : "EGP"}
                     </span>
                   </div>
-                  {shippingCost > 0 && (
+                  {isFreeShipping ? (
+                    <div className="flex justify-between text-gray-400">
+                      <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
+                      <span className="font-bold text-green-400">
+                        {lang === "ar" ? "🎉 مجاناً" : "🎉 Free"}
+                      </span>
+                    </div>
+                  ) : shippingCost > 0 ? (
                     <div className="flex justify-between text-gray-400">
                       <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
                       <span className="font-medium text-white">
                         {shippingCost} {lang === "ar" ? "جنيه" : "EGP"}
                       </span>
                     </div>
+                  ) : null}
+
+                  {/* Free shipping progress & notice */}
+                  {settings.freeShippingEnabled && freeShippingRemaining > 0 && (
+                    <div className="py-1">
+                      <p className="text-[11px] text-yellow-400/90 font-medium mb-1">
+                        {lang === "ar"
+                          ? `أضف ${freeShippingRemaining} ج.م للحصول على شحن مجاني 🚚`
+                          : `Add ${freeShippingRemaining} EGP for free shipping 🚚`}
+                      </p>
+                      <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-gold h-full rounded-full transition-all duration-300"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (cartSubtotal / freeShippingThreshold) * 100
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
                   )}
-                  {/* City-based shipping note */}
-                  <p className="text-[11px] text-gray-500 italic">
-                    {lang === "ar"
-                      ? "⚠️ سعر الشحن يُحدَّد حسب المحافظة عند الدفع"
-                      : "⚠️ Exact shipping calculated at checkout by city"}
-                  </p>
+
+                  {!isFreeShipping && (
+                    <p className="text-[11px] text-gray-500 italic">
+                      {lang === "ar"
+                        ? "⚠️ سعر الشحن يُحدَّد حسب المحافظة عند الدفع"
+                        : "⚠️ Exact shipping calculated at checkout by city"}
+                    </p>
+                  )}
                   <div className="flex justify-between text-base font-bold pt-2 border-t border-white/10 text-white">
                     <span>{lang === "ar" ? "الإجمالي" : "Total"}</span>
                     <span className="text-gold font-serif text-lg">

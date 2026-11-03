@@ -10,6 +10,11 @@ const DEFAULT_SETTINGS = {
   instagramUrl: '#',
   whatsappTemplate: 'مرحباً ريحانة، أود الاستفسار عن عطر: {product} حجم {size}',
   facebookPixelId: '26387857114203242',
+  // Shipping
+  shippingFee: 0,
+  shippingRates: {},
+  freeShippingEnabled: false,   // تفعيل/تعطيل التوصيل المجاني
+  freeShippingThreshold: 0,     // الحد الأدنى للطلب للحصول على توصيل مجاني (0 = للجميع)
   categories: [
     { id: 'men', nameAr: 'رجالي', nameEn: 'Men' },
     { id: 'women', nameAr: 'نسائي', nameEn: 'Women' },
