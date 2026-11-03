@@ -54,7 +54,7 @@ const ProductCard = ({ product }) => {
       }}
       onClick={() => navigate(`/product/${product.id}`)}
     >
-      <div className="relative aspect-4/5 bg-warm-white w-full overflow-hidden flex items-center justify-center p-8">
+      <div className="relative aspect-4/5 bg-warm-white w-full overflow-hidden flex items-center justify-center p-4 sm:p-6">
         {/* Subtle Gradient Overlay on Hover */}
         <div className="absolute inset-0 bg-linear-to-t from-dark/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 pointer-events-none"></div>
 
@@ -62,9 +62,9 @@ const ProductCard = ({ product }) => {
           src={product.images?.[0] || product.image}
           alt={productName}
           loading="lazy"
-          className="object-contain w-full h-full relative z-0"
+          className="object-cover w-full h-full relative z-0 rounded-xl"
           initial={{ filter: "brightness(0.95)", scale: 1 }}
-          whileHover={{ filter: "brightness(1)", scale: 1.08 }}
+          whileHover={{ filter: "brightness(1)", scale: 1.05 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         />
       </div>

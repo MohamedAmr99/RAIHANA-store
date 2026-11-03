@@ -152,8 +152,12 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct }) => {
         trending: editingProduct.trending || false,
         bestSeller: editingProduct.bestSeller || false,
         exclusive: editingProduct.exclusive || false,
-        price: editingProduct.sizePrices?.["50ML"] || editingProduct.price || "",
-        price100ml: editingProduct.sizePrices?.["100ML"] || editingProduct.price100ml || "",
+        price:
+          editingProduct.sizePrices?.["50ML"] || editingProduct.price || "",
+        price100ml:
+          editingProduct.sizePrices?.["100ML"] ||
+          editingProduct.price100ml ||
+          "",
       });
     } else {
       setFormData(EMPTY_FORM);
@@ -932,7 +936,10 @@ export default function Admin() {
       alert("تم حفظ الترتيب بنجاح!");
     } catch (err) {
       console.error("Failed to save order:", err);
-      if (err.message.includes("permission") || err.code === "permission-denied") {
+      if (
+        err.message.includes("permission") ||
+        err.code === "permission-denied"
+      ) {
         alert("عذراً، ليس لديك صلاحية لحفظ الترتيب. يرجى تسجيل الدخول أولاً.");
       } else {
         alert("حدث خطأ أثناء حفظ الترتيب: " + err.message);
@@ -944,7 +951,9 @@ export default function Admin() {
 
   const handleSaveProduct = async (formData) => {
     if (!auth.currentUser) {
-      alert("⚠️ عذراً، أنت غير مسجل الدخول في Firebase! يرجى تسجيل الدخول أولاً من صفحة /login.");
+      alert(
+        "⚠️ عذراً، أنت غير مسجل الدخول في Firebase! يرجى تسجيل الدخول أولاً من صفحة /login.",
+      );
       navigate("/login");
       return;
     }
@@ -952,7 +961,9 @@ export default function Admin() {
     const currentEmail = auth.currentUser.email?.toLowerCase();
     const ALLOWED_ADMINS = ["amohamedamr99@gmail.com", "admin@store.com"];
     if (!ALLOWED_ADMINS.includes(currentEmail)) {
-      alert(`⚠️ الحساب المسجل به حالياً (${auth.currentUser.email}) ليس هو الحساب المعتمد للأدمن.`);
+      alert(
+        `⚠️ الحساب المسجل به حالياً (${auth.currentUser.email}) ليس هو الحساب المعتمد للأدمن.`,
+      );
       return;
     }
 
@@ -1201,7 +1212,7 @@ export default function Admin() {
                 </button>
               </div>
             </div>
-  
+
             {/* Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
@@ -1398,7 +1409,10 @@ export default function Admin() {
                             {order.customerName}
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-600 font-mono" dir="ltr">
+                            <span
+                              className="text-xs text-gray-600 font-mono"
+                              dir="ltr"
+                            >
                               {order.customerPhone}
                             </span>
                             {order.customerPhone && (
@@ -1431,7 +1445,10 @@ export default function Admin() {
                           {order.items && order.items.length > 0 ? (
                             <div className="space-y-2 min-w-55">
                               {order.items.map((it, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-xs text-gray-800">
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 text-xs text-gray-800"
+                                >
                                   {it.image && (
                                     <img
                                       src={it.image}
@@ -1445,7 +1462,9 @@ export default function Admin() {
                                       {it.nameAr || it.nameEn}
                                     </p>
                                     <p className="text-[11px] text-gray-500">
-                                      {it.size ? `${it.size} ` : ""}× {it.quantity} = {it.price * it.quantity} ج.م
+                                      {it.size ? `${it.size} ` : ""}×{" "}
+                                      {it.quantity} = {it.price * it.quantity}{" "}
+                                      ج.م
                                     </p>
                                   </div>
                                 </div>
@@ -1454,25 +1473,41 @@ export default function Admin() {
                               {/* Price verification and total display */}
                               {(() => {
                                 const calculatedItemsSum = order.items.reduce(
-                                  (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
-                                  0
+                                  (sum, item) =>
+                                    sum +
+                                    (Number(item.price) || 0) *
+                                      (Number(item.quantity) || 1),
+                                  0,
                                 );
-                                const expectedTotal = calculatedItemsSum + (Number(order.shippingCost) || 0);
+                                const expectedTotal =
+                                  calculatedItemsSum +
+                                  (Number(order.shippingCost) || 0);
                                 const isDiscrepancy =
-                                  order.totalAmount && Math.abs(expectedTotal - Number(order.totalAmount)) > 1;
+                                  order.totalAmount &&
+                                  Math.abs(
+                                    expectedTotal - Number(order.totalAmount),
+                                  ) > 1;
 
                                 return (
                                   <div className="pt-2 border-t border-gray-100 mt-1">
                                     <div className="flex justify-between items-center text-xs font-bold text-gray-900">
                                       <span>الإجمالي:</span>
                                       <span className="text-yellow-700">
-                                        {order.totalAmount || calculatedItemsSum} ج.م
+                                        {order.totalAmount ||
+                                          calculatedItemsSum}{" "}
+                                        ج.م
                                       </span>
                                     </div>
                                     {isDiscrepancy && (
                                       <div className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 p-1 rounded font-bold mt-1 border border-red-200">
-                                        <AlertTriangle size={12} className="shrink-0" />
-                                        <span>تنبيه: اختلاف بين الإجمالي ومجموع المنتجات!</span>
+                                        <AlertTriangle
+                                          size={12}
+                                          className="shrink-0"
+                                        />
+                                        <span>
+                                          تنبيه: اختلاف بين الإجمالي ومجموع
+                                          المنتجات!
+                                        </span>
                                       </div>
                                     )}
                                   </div>
@@ -1483,19 +1518,28 @@ export default function Admin() {
                             /* Legacy single-product order display */
                             <div className="flex items-center gap-3">
                               {(() => {
-                                const relatedProduct = products.find(p => p.id === order.productId);
-                                const img = order.productImage || relatedProduct?.image || relatedProduct?.images?.[0];
+                                const relatedProduct = products.find(
+                                  (p) => p.id === order.productId,
+                                );
+                                const img =
+                                  order.productImage ||
+                                  relatedProduct?.image ||
+                                  relatedProduct?.images?.[0];
                                 if (img) {
                                   return (
-                                    <img 
-                                      src={img} 
-                                      alt="Product" 
+                                    <img
+                                      src={img}
+                                      alt="Product"
                                       onClick={() => setViewingImage(img)}
-                                      className="w-12 h-12 object-cover rounded-lg border border-gray-100 shrink-0 cursor-pointer hover:shadow-md transition-shadow" 
+                                      className="w-12 h-12 object-cover rounded-lg border border-gray-100 shrink-0 cursor-pointer hover:shadow-md transition-shadow"
                                     />
                                   );
                                 }
-                                return <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] shrink-0">لا صورة</div>;
+                                return (
+                                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] shrink-0">
+                                    لا صورة
+                                  </div>
+                                );
                               })()}
                               <div>
                                 <p className="font-semibold text-gray-900 line-clamp-2">
@@ -1563,17 +1607,17 @@ export default function Admin() {
 
       {/* Image Viewer Overlay */}
       {viewingImage && (
-        <div 
+        <div
           className="fixed inset-0 z-100 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out backdrop-blur-sm"
           onClick={() => setViewingImage(null)}
         >
-          <img 
-            src={viewingImage} 
-            alt="Fullscreen View" 
-            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl" 
+          <img
+            src={viewingImage}
+            alt="Fullscreen View"
+            className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
-          <button 
+          <button
             className="absolute top-6 right-6 text-white bg-black/50 hover:bg-black p-2 rounded-full transition-colors cursor-pointer"
             onClick={() => setViewingImage(null)}
           >

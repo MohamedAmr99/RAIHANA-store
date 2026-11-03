@@ -57,7 +57,11 @@ const ProductDetails = () => {
   }, [product, sizes]);
 
   const currentPrice = useMemo(() => {
-    if (product?.sizePrices && selectedSize && product.sizePrices[selectedSize]) {
+    if (
+      product?.sizePrices &&
+      selectedSize &&
+      product.sizePrices[selectedSize]
+    ) {
       return product.sizePrices[selectedSize];
     }
     return product?.price || null;
@@ -142,7 +146,7 @@ const ProductDetails = () => {
 
         <div className="bg-white w-full rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col lg:flex-row">
           {/* Image Section */}
-          <div className="lg:w-1/2 relative h-96 sm:h-[500px] lg:h-[700px] bg-beige flex items-center justify-center group shrink-0">
+          <div className="lg:w-1/2 relative h-96 sm:h-125 lg:h-175 bg-beige flex items-center justify-center group shrink-0">
             <AnimatePresence mode="wait">
               <motion.img
                 key={activeImgIdx}
@@ -253,7 +257,8 @@ const ProductDetails = () => {
                         {size}
                         {product?.sizePrices?.[size] && (
                           <span className="text-xs opacity-75 mr-1 ml-1 block font-normal">
-                            {product.sizePrices[size]} {lang === "ar" ? "ج.م" : "EGP"}
+                            {product.sizePrices[size]}{" "}
+                            {lang === "ar" ? "ج.م" : "EGP"}
                           </span>
                         )}
                       </button>
@@ -310,7 +315,7 @@ const ProductDetails = () => {
                 <button
                   onClick={() =>
                     navigate(
-                      `/checkout/${product.id}?size=${encodeURIComponent(selectedSize)}`
+                      `/checkout/${product.id}?size=${encodeURIComponent(selectedSize)}`,
                     )
                   }
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-dark/20 text-dark rounded-xl hover:border-dark font-medium text-xs lg:text-sm tracking-wider uppercase transition-colors cursor-pointer"
@@ -322,7 +327,7 @@ const ProductDetails = () => {
                 {settings.whatsappNumber && (
                   <a
                     href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
-                      whatsappMsg
+                      whatsappMsg,
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
