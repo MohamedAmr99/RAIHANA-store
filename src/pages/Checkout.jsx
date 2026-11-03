@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -8,6 +8,14 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { usePerfumes } from "../hooks/usePerfumes";
 import { useCart } from "../context/CartContext";
 import { useSettings } from "../hooks/useSettings";
+
+// ─── Constants outside component (never recreated on re-render) ────────────
+const EGYPTIAN_GOVERNORATES = [
+  "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الغربية", "المنوفية",
+  "الشرقية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية", "السويس",
+  "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر",
+  "أسوان", "مطروح", "شمال سيناء", "جنوب سيناء", "البحر الأحمر", "الوادي الجديد",
+];
 
 const Checkout = () => {
   const { id } = useParams();
@@ -25,29 +33,29 @@ const Checkout = () => {
   const singleProduct = id ? perfumesData.find((p) => p.id.toString() === id) : null;
   const isDirectCheckout = Boolean(id && singleProduct);
 
-  // Calculate items and totals
-  let orderItems = [];
-  let subtotal = 0;
-
-  if (isDirectCheckout && singleProduct) {
-    let itemPrice = Number(singleProduct.price) || 0;
-    if (directSize && singleProduct.sizePrices && singleProduct.sizePrices[directSize]) {
-      itemPrice = Number(singleProduct.sizePrices[directSize]);
+  // ─── Calculate items & subtotal (memoized — no needless recalculation) ──────
+  const { orderItems, subtotal } = useMemo(() => {
+    if (isDirectCheckout && singleProduct) {
+      let itemPrice = Number(singleProduct.price) || 0;
+      if (directSize && singleProduct.sizePrices && singleProduct.sizePrices[directSize]) {
+        itemPrice = Number(singleProduct.sizePrices[directSize]);
+      }
+      return {
+        orderItems: [
+          {
+            id: singleProduct.id,
+            nameEn: singleProduct.name?.en || "",
+            nameAr: singleProduct.name?.ar || "",
+            size: directSize,
+            price: itemPrice,
+            quantity: 1,
+            image: singleProduct.images?.[0] || singleProduct.image || "",
+          },
+        ],
+        subtotal: itemPrice,
+      };
     }
-    orderItems = [
-      {
-        id: singleProduct.id,
-        nameEn: singleProduct.name?.en || "",
-        nameAr: singleProduct.name?.ar || "",
-        size: directSize,
-        price: itemPrice,
-        quantity: 1,
-        image: singleProduct.images?.[0] || singleProduct.image || "",
-      },
-    ];
-    subtotal = itemPrice;
-  } else {
-    orderItems = cart.map((item) => ({
+    const items = cart.map((item) => ({
       id: item.productId,
       nameEn: item.name?.en || "",
       nameAr: item.name?.ar || "",
@@ -56,16 +64,10 @@ const Checkout = () => {
       quantity: Number(item.quantity) || 1,
       image: item.image || "",
     }));
-    subtotal = cartSubtotal;
-  }
+    return { orderItems: items, subtotal: cartSubtotal };
+  }, [isDirectCheckout, singleProduct, directSize, cart, cartSubtotal]);
 
-  // ─── Egyptian Governorates ───────────────────────────────────────────────────
-  const EGYPTIAN_GOVERNORATES = [
-    "القاهرة", "الجيزة", "الإسكندرية", "الدقهلية", "الغربية", "المنوفية",
-    "الشرقية", "كفر الشيخ", "دمياط", "بورسعيد", "الإسماعيلية", "السويس",
-    "الفيوم", "بني سويف", "المنيا", "أسيوط", "سوهاج", "قنا", "الأقصر",
-    "أسوان", "مطروح", "شمال سيناء", "جنوب سيناء", "البحر الأحمر", "الوادي الجديد",
-  ];
+  // ─── Egyptian Governorates ──── moved to module-level constant above ────────
 
   const [formData, setFormData] = useState({
     name: "",
@@ -95,11 +97,13 @@ const Checkout = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  // ─── useCallback: stable function reference — not recreated on every render ──
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }, []); // no deps needed — uses functional updater form
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (orderItems.length === 0) return;
 
@@ -148,7 +152,7 @@ const Checkout = () => {
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [orderItems, subtotal, shippingCost, totalAmount, formData, isDirectCheckout, clearCart, lang]);
 
   if (loading) {
     return (
