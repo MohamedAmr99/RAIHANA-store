@@ -1205,7 +1205,7 @@ export default function Admin() {
             {/* Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full text-right min-w-[700px]">
+                <table className="w-full text-right min-w-175">
                   <thead>
                     <tr className="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-widest">
                       <th className="p-4">الصورة</th>
@@ -1360,7 +1360,7 @@ export default function Admin() {
         {activeTab === "orders" && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-right min-w-[800px]">
+              <table className="w-full text-right min-w-200">
                 <thead>
                   <tr className="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-widest">
                     <th className="p-4">تاريخ الطلب</th>
@@ -1429,7 +1429,7 @@ export default function Admin() {
                         </td>
                         <td className="p-4">
                           {order.items && order.items.length > 0 ? (
-                            <div className="space-y-2 min-w-[220px]">
+                            <div className="space-y-2 min-w-55">
                               {order.items.map((it, idx) => (
                                 <div key={idx} className="flex items-center gap-2 text-xs text-gray-800">
                                   {it.image && (
@@ -1564,7 +1564,7 @@ export default function Admin() {
       {/* Image Viewer Overlay */}
       {viewingImage && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 cursor-zoom-out backdrop-blur-sm"
+          className="fixed inset-0 z-100 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out backdrop-blur-sm"
           onClick={() => setViewingImage(null)}
         >
           <img 
