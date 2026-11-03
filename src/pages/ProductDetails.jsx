@@ -7,10 +7,12 @@ import {
   ChevronRight,
   ArrowLeft,
   ShoppingBag,
+  CreditCard,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSettings } from "../hooks/useSettings";
 import { usePerfumes } from "../hooks/usePerfumes";
+import { useCart } from "../context/CartContext";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -18,6 +20,7 @@ const ProductDetails = () => {
   const { t, i18n } = useTranslation();
   const { settings } = useSettings();
   const { perfumesData, loading } = usePerfumes();
+  const { addToCart } = useCart();
 
   const product = perfumesData.find((p) => p.id.toString() === id);
   const lang = i18n.language || "en";
@@ -45,6 +48,13 @@ const ProductDetails = () => {
     }
   }, [product, sizes]);
 
+  const currentPrice = useMemo(() => {
+    if (product?.sizePrices && selectedSize && product.sizePrices[selectedSize]) {
+      return product.sizePrices[selectedSize];
+    }
+    return product?.price || null;
+  }, [product, selectedSize]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
@@ -61,7 +71,7 @@ const ProductDetails = () => {
         </h2>
         <button
           onClick={() => navigate(-1)}
-          className="text-gold hover:underline"
+          className="text-gold hover:underline cursor-pointer"
         >
           {lang === "ar" ? "العودة للتسوق" : "Go back to shopping"}
         </button>
@@ -79,8 +89,8 @@ const ProductDetails = () => {
 
   const defaultMsg =
     lang === "ar"
-      ? `مرحبًا، أريد معرفة سعر عطر ${productName} (حجم ${selectedSize})`
-      : `Hello, I want to know the price of ${productName} (${selectedSize} size)`;
+      ? `مرحبًا، أود الاستفسار عن عطر ${productName} (حجم ${selectedSize})`
+      : `Hello, I'd like to inquire about ${productName} (${selectedSize} size)`;
 
   const whatsappMsg = (settings.whatsappTemplate || defaultMsg)
     .replace("{product}", productName)
@@ -89,6 +99,10 @@ const ProductDetails = () => {
   const nextImg = () => setActiveImgIdx((p) => (p + 1) % images.length);
   const prevImg = () =>
     setActiveImgIdx((p) => (p - 1 + images.length) % images.length);
+
+  const handleAddToCart = () => {
+    addToCart(product, selectedSize, 1);
+  };
 
   return (
     <motion.div
@@ -102,11 +116,15 @@ const ProductDetails = () => {
         <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-500 hover:text-gold transition-colors group"
+            className="flex items-center gap-2 text-gray-500 hover:text-gold transition-colors group cursor-pointer"
           >
             <ArrowLeft
               size={20}
-              className={`transition-transform ${lang === "ar" ? "group-hover:translate-x-1 rotate-180" : "group-hover:-translate-x-1"}`}
+              className={`transition-transform ${
+                lang === "ar"
+                  ? "group-hover:translate-x-1 rotate-180"
+                  : "group-hover:-translate-x-1"
+              }`}
             />
             <span className="text-sm font-medium uppercase tracking-wider">
               {t("back")}
@@ -161,8 +179,12 @@ const ProductDetails = () => {
                     <button
                       key={i}
                       onClick={() => setActiveImgIdx(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${i === activeImgIdx ? "bg-gold w-6 lg:w-8" : "bg-dark/30 w-2 hover:bg-dark/50"}`}
-                      aria-label={`Go to image ${i + 1}`}
+                      className={`h-2.5 rounded-full transition-all duration-300 ${
+                        activeImgIdx === i
+                          ? "w-8 bg-gold"
+                          : "w-2.5 bg-gray-300 hover:bg-gray-400"
+                      }`}
+                      aria-label={`Go to slide ${i + 1}`}
                     />
                   ))}
                 </div>
@@ -170,30 +192,43 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Content Section */}
-          <div className="lg:w-1/2 p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
+          {/* Details Section */}
+          <div className="lg:w-1/2 p-8 lg:p-16 flex flex-col justify-between">
             <div>
-              <div className="uppercase tracking-widest text-gold text-xs lg:text-sm font-semibold mb-3">
-                {t(product.category)} {t("collection")}
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-xs uppercase tracking-widest text-gold font-medium">
+                  {product.category}
+                </span>
+                {product.bestSeller && (
+                  <span className="text-[10px] uppercase tracking-wider bg-gold/10 text-gold px-2.5 py-1 rounded-full font-bold">
+                    {lang === "ar" ? "الأكثر طلباً" : "Best Seller"}
+                  </span>
+                )}
               </div>
-              <h1 className="text-4xl lg:text-5xl md:text-6xl font-serif text-dark mb-6 tracking-tight leading-tight">
+
+              <h1 className="text-3xl lg:text-5xl font-serif text-dark font-medium mb-3">
                 {productName}
               </h1>
-              {product?.price && (
-                <div className="text-2xl font-bold text-gold mb-6">
-                  {product.price} {lang === "ar" ? "جنيه" : "EGP"}
+
+              {currentPrice && (
+                <div className="text-3xl font-serif font-bold text-gold mb-6 flex items-baseline gap-2">
+                  <span>{currentPrice}</span>
+                  <span className="text-sm font-sans font-normal text-gray-500">
+                    {lang === "ar" ? "جنيه مصري" : "EGP"}
+                  </span>
                 </div>
               )}
+
               <div className="w-16 h-1 bg-gold mb-8 rounded-full"></div>
 
-              <p className="text-gray-600 font-light leading-relaxed mb-10 text-base lg:text-lg">
+              <p className="text-gray-600 font-light leading-relaxed mb-8 text-base lg:text-lg">
                 {productDesc}
               </p>
 
               {/* Size Selector */}
               {sizes.length > 0 && (
-                <div className="mb-10">
-                  <span className="text-xs lg:text-sm uppercase tracking-widest text-gray-400 block mb-4">
+                <div className="mb-8">
+                  <span className="text-xs lg:text-sm uppercase tracking-widest text-gray-400 block mb-3">
                     {lang === "ar" ? "اختر الحجم" : "Select Size"}
                   </span>
                   <div className="flex gap-4">
@@ -201,19 +236,28 @@ const ProductDetails = () => {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`px-8 py-3 rounded-full text-sm font-bold transition-all border-2 ${selectedSize === size ? "bg-dark border-dark text-white shadow-lg scale-105" : "bg-transparent border-gray-200 text-gray-500 hover:border-gold hover:text-dark"}`}
+                        className={`px-8 py-3 rounded-full text-sm font-bold transition-all border-2 cursor-pointer ${
+                          selectedSize === size
+                            ? "bg-dark border-dark text-white shadow-lg scale-105"
+                            : "bg-transparent border-gray-200 text-gray-500 hover:border-gold hover:text-dark"
+                        }`}
                       >
                         {size}
+                        {product?.sizePrices?.[size] && (
+                          <span className="text-xs opacity-75 mr-1 ml-1 block font-normal">
+                            {product.sizePrices[size]} {lang === "ar" ? "ج.م" : "EGP"}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Notes */}
+              {/* Fragrance Notes */}
               {!["diffusers", "incense"].includes(product.category) && (
-                <div className="space-y-5 mb-12 bg-warm-white/50 border border-dark/5 p-6 rounded-2xl">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-dark/5 pb-4 gap-2 sm:gap-6">
+                <div className="space-y-4 mb-8 bg-warm-white/50 border border-dark/5 p-6 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-dark/5 pb-3 gap-2">
                     <span className="text-[11px] lg:text-xs uppercase tracking-widest text-gray-500 shrink-0 font-medium">
                       {t("top_notes")}
                     </span>
@@ -221,7 +265,7 @@ const ProductDetails = () => {
                       {topNotes}
                     </span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-dark/5 pb-4 gap-2 sm:gap-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start border-b border-dark/5 pb-3 gap-2">
                     <span className="text-[11px] lg:text-xs uppercase tracking-widest text-gray-500 shrink-0 font-medium">
                       {t("middle_notes")}
                     </span>
@@ -229,7 +273,7 @@ const ProductDetails = () => {
                       {middleNotes}
                     </span>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                     <span className="text-[11px] lg:text-xs uppercase tracking-widest text-gray-500 shrink-0 font-medium">
                       {t("base_notes")}
                     </span>
@@ -241,27 +285,47 @@ const ProductDetails = () => {
               )}
             </div>
 
-            {["men", "women", "unisex"].includes(product.category) ? (
-              <a
-                href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(whatsappMsg)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 w-full py-5 lg:py-6 bg-dark text-warm-white uppercase tracking-widest text-sm lg:text-base font-bold hover:bg-gold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:-translate-y-1 transition-all duration-300 rounded-xl mt-auto overflow-hidden group relative"
-              >
-                <div className="absolute inset-0 w-1/4 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:animate-[shine_1.5s_ease-out_infinite]" />
-                <MessageCircle size={20} className="relative z-10" />
-                <span className="relative z-10">{t("inquire_whatsapp")}</span>
-              </a>
-            ) : (
+            {/* Action Buttons */}
+            <div className="space-y-3 mt-4">
               <button
-                onClick={() => navigate(`/checkout/${product.id}?size=${selectedSize}`)}
-                className="flex items-center justify-center gap-3 w-full py-5 lg:py-6 bg-dark text-warm-white uppercase tracking-widest text-sm lg:text-base font-bold hover:bg-gold hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:-translate-y-1 transition-all duration-300 rounded-xl mt-auto overflow-hidden group relative"
+                onClick={handleAddToCart}
+                className="flex items-center justify-center gap-3 w-full py-4 lg:py-5 bg-dark text-warm-white uppercase tracking-widest text-sm lg:text-base font-bold hover:bg-gold hover:text-black hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] hover:-translate-y-0.5 transition-all duration-300 rounded-xl overflow-hidden group relative cursor-pointer"
               >
                 <div className="absolute inset-0 w-1/4 h-full bg-white/20 skew-x-12 -translate-x-full group-hover:animate-[shine_1.5s_ease-out_infinite]" />
                 <ShoppingBag size={20} className="relative z-10" />
-                <span className="relative z-10">{lang === "ar" ? "إتمام الطلب" : "Checkout"}</span>
+                <span className="relative z-10">
+                  {lang === "ar" ? "أضف إلى السلة" : "Add to Cart"}
+                </span>
               </button>
-            )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/checkout/${product.id}?size=${encodeURIComponent(selectedSize)}`
+                    )
+                  }
+                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-dark/20 text-dark rounded-xl hover:border-dark font-medium text-xs lg:text-sm tracking-wider uppercase transition-colors cursor-pointer"
+                >
+                  <CreditCard size={16} />
+                  <span>{lang === "ar" ? "طلب سريع" : "Fast Checkout"}</span>
+                </button>
+
+                {settings.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
+                      whatsappMsg
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 py-3 px-4 border border-green-600/30 text-green-700 bg-green-50/50 rounded-xl hover:bg-green-50 font-medium text-xs lg:text-sm tracking-wider transition-colors"
+                  >
+                    <MessageCircle size={16} />
+                    <span>{lang === "ar" ? "واتساب" : "WhatsApp"}</span>
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

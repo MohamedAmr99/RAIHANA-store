@@ -11,6 +11,8 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import FacebookPixel from "./components/FacebookPixel";
 import ScrollToTop from "./components/ScrollToTop";
+import { CartProvider } from "./context/CartContext";
+import CartDrawer from "./components/CartDrawer";
 
 // Lazy loading for pages
 const Home = lazy(() => import("./pages/Home"));
@@ -52,6 +54,7 @@ const AnimatedRoutes = () => {
             </ProtectedRoute>
           } />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
         </Routes>
@@ -62,15 +65,18 @@ const AnimatedRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <FacebookPixel />
-      <div className="font-sans antialiased text-dark min-h-screen flex flex-col selection:bg-gold selection:text-white">
-        <Navbar />
-        <AnimatedRoutes />
-        <Footer />
-      </div>
-    </Router>
+    <CartProvider>
+      <Router>
+        <ScrollToTop />
+        <FacebookPixel />
+        <div className="font-sans antialiased text-dark min-h-screen flex flex-col selection:bg-gold selection:text-white">
+          <Navbar />
+          <AnimatedRoutes />
+          <Footer />
+          <CartDrawer />
+        </div>
+      </Router>
+    </CartProvider>
   );
 }
 

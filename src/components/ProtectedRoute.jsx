@@ -15,9 +15,6 @@ const ProtectedRoute = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  // Development Bypass: Allow access if in DEV mode
-  const isDevBypass = import.meta.env.DEV;
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
@@ -26,7 +23,8 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!user && !isDevBypass) {
+  // Require real authentication to prevent "Missing or insufficient permissions" error
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 

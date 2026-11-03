@@ -17,6 +17,8 @@ export const perfumesData = [
     exclusive: true,
     bestSeller: true,
     priceRange: "medium",
+    price: 650,
+    sizePrices: { "50ML": 650, "100ML": 950 },
   },
   {
     id: 2,
@@ -36,6 +38,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: false,
     priceRange: "low",
+    price: 600,
+    sizePrices: { "50ML": 600, "100ML": 900 },
   },
   {
     id: 3,
@@ -55,6 +59,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: true,
     priceRange: "medium",
+    price: 650,
+    sizePrices: { "50ML": 650, "100ML": 950 },
   },
   {
     id: 4,
@@ -77,6 +83,8 @@ export const perfumesData = [
     exclusive: true,
     bestSeller: true,
     priceRange: "high",
+    price: 750,
+    sizePrices: { "50ML": 750, "100ML": 1100 },
   },
   {
     id: 5,
@@ -96,6 +104,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: true,
     priceRange: "medium",
+    price: 650,
+    sizePrices: { "50ML": 650, "100ML": 950 },
   },
   {
     id: 6,
@@ -115,6 +125,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: true,
     priceRange: "high",
+    price: 750,
+    sizePrices: { "50ML": 750, "100ML": 1100 },
   },
   {
     id: 7,
@@ -137,6 +149,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: false,
     priceRange: "high",
+    price: 750,
+    sizePrices: { "50ML": 750, "100ML": 1100 },
   },
   {
     id: 8,
@@ -156,6 +170,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: false,
     priceRange: "medium",
+    price: 650,
+    sizePrices: { "50ML": 650, "100ML": 950 },
   },
   {
     id: 9,
@@ -179,6 +195,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: true,
     priceRange: "high",
+    price: 700,
+    sizePrices: { "50ML": 700, "100ML": 1000 },
   },
   {
     id: 10,
@@ -198,6 +216,8 @@ export const perfumesData = [
     exclusive: false,
     bestSeller: true,
     priceRange: "medium",
+    price: 650,
+    sizePrices: { "50ML": 650, "100ML": 950 },
   },
   {
     id: 11,
@@ -220,6 +240,8 @@ export const perfumesData = [
     exclusive: true,
     bestSeller: true,
     priceRange: "low",
+    price: 600,
+    sizePrices: { "50ML": 600, "100ML": 900 },
   },
 ];
 

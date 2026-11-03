@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import LanguageSwitcher from "./LanguageSwitcher";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { cartCount, setIsCartOpen } = useCart();
+  const lang = i18n.language || "en";
 
   const toggleMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <nav className="absolute top-0 w-full z-50 bg-warm-white/80 backdrop-blur-md border-b border-dark/5">
+    <nav className="absolute top-0 w-full z-40 bg-warm-white/80 backdrop-blur-md border-b border-dark/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="shrink-0 flex items-center">
@@ -53,6 +56,25 @@ const Navbar = () => {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Cart Button */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-dark hover:text-gold transition-colors duration-300 rounded-full hover:bg-black/5"
+                aria-label={lang === "ar" ? "سلة المشتريات" : "Shopping Cart"}
+                title={lang === "ar" ? "سلة المشتريات" : "Shopping Cart"}
+              >
+                <ShoppingBag size={22} />
+                {cartCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 bg-gold text-dark text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md border-2 border-white"
+                  >
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </motion.span>
+                )}
+              </button>
+
               <LanguageSwitcher />
 
               {/* Mobile Menu Toggle */}

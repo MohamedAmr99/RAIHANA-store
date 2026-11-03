@@ -30,6 +30,8 @@ import {
   RefreshCw,
   ShoppingCart,
   GripVertical,
+  MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { perfumesData as localSeedData } from "../data/perfumes";
 import { useSettings } from "../hooks/useSettings";
@@ -69,6 +71,7 @@ const EMPTY_FORM = {
   bestSeller: false,
   exclusive: false,
   price: "",
+  price100ml: "",
 };
 
 // ─────────────────────────────────────────
@@ -149,7 +152,8 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct }) => {
         trending: editingProduct.trending || false,
         bestSeller: editingProduct.bestSeller || false,
         exclusive: editingProduct.exclusive || false,
-        price: editingProduct.price || "",
+        price: editingProduct.sizePrices?.["50ML"] || editingProduct.price || "",
+        price100ml: editingProduct.sizePrices?.["100ML"] || editingProduct.price100ml || "",
       });
     } else {
       setFormData(EMPTY_FORM);
@@ -376,10 +380,37 @@ const ProductModal = ({ isOpen, onClose, onSave, editingProduct }) => {
                 </select>
               </div>
               {/* Price */}
-              {formData.category === "diffusers" && (
+              {["men", "women", "unisex"].includes(formData.category) ? (
+                <>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest mb-1 text-gray-500">
+                      سعر 50ML (جنيه) *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.price}
+                      onChange={(e) => set("price", e.target.value)}
+                      placeholder="e.g. 650"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs uppercase tracking-widest mb-1 text-gray-500">
+                      سعر 100ML (جنيه) *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.price100ml}
+                      onChange={(e) => set("price100ml", e.target.value)}
+                      placeholder="e.g. 950"
+                      className="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 font-bold"
+                    />
+                  </div>
+                </>
+              ) : (
                 <div>
                   <label className="block text-xs uppercase tracking-widest mb-1 text-gray-500">
-                    Price (السعر)
+                    السعر (جنيه) *
                   </label>
                   <input
                     type="number"
@@ -845,12 +876,8 @@ export default function Admin() {
     return unsub;
   }, [t]);
 
-  // Fetch products
+  // Fetch products (public read — always fetch)
   useEffect(() => {
-    // Enable fetching if user exists OR we are in development mode (Bypass)
-    const isDev = import.meta.env.DEV;
-    if (!user && !isDev) return;
-
     const unsub = onSnapshot(collection(db, "perfumes"), (snap) => {
       const prods = [];
       snap.forEach((d) => prods.push({ id: d.id, ...d.data() }));
@@ -859,12 +886,11 @@ export default function Admin() {
       setProducts(prods);
     });
     return unsub;
-  }, [user]);
+  }, []);
 
-  // Fetch orders
+  // Fetch orders (admin only — require auth)
   useEffect(() => {
-    const isDev = import.meta.env.DEV;
-    if (!user && !isDev) return;
+    if (!user) return;
 
     const unsub = onSnapshot(collection(db, "orders"), (snap) => {
       const ords = [];
@@ -917,6 +943,19 @@ export default function Admin() {
   };
 
   const handleSaveProduct = async (formData) => {
+    if (!auth.currentUser) {
+      alert("⚠️ عذراً، أنت غير مسجل الدخول في Firebase! يرجى تسجيل الدخول أولاً من صفحة /login.");
+      navigate("/login");
+      return;
+    }
+
+    const currentEmail = auth.currentUser.email?.toLowerCase();
+    const ALLOWED_ADMINS = ["amohamedamr99@gmail.com", "admin@store.com"];
+    if (!ALLOWED_ADMINS.includes(currentEmail)) {
+      alert(`⚠️ الحساب المسجل به حالياً (${auth.currentUser.email}) ليس هو الحساب المعتمد للأدمن.`);
+      return;
+    }
+
     const productId = editingProduct
       ? editingProduct.id
       : Date.now().toString();
@@ -933,7 +972,12 @@ export default function Admin() {
       trending: formData.trending,
       bestSeller: formData.bestSeller,
       exclusive: formData.exclusive,
-      ...(formData.category === "diffusers" && { price: formData.price }),
+      price: formData.price ? Number(formData.price) : 0,
+      price100ml: formData.price100ml ? Number(formData.price100ml) : null,
+      sizePrices: {
+        ...(formData.price && { "50ML": Number(formData.price) }),
+        ...(formData.price100ml && { "100ML": Number(formData.price100ml) }),
+      },
       images: formData.images || (formData.image ? [formData.image] : []),
       sizes: formData.sizes || ["50ML", "100ML"],
     };
@@ -1007,6 +1051,17 @@ export default function Admin() {
             <p className="text-sm text-gray-500 mt-0.5">
               مرحباً! إدارة منتجات وإعدادات RAIHANA
             </p>
+            {user ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-green-700 bg-green-50 px-2.5 py-1 rounded-full mt-2 border border-green-200">
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                مسجل الدخول: <strong className="font-mono">{user.email}</strong>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-xs text-red-700 bg-red-50 px-2.5 py-1 rounded-full mt-2 border border-red-200">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                ⚠️ غير مسجل الدخول — لن تتمكن من الحفظ
+              </span>
+            )}
           </div>
           <button
             onClick={async () => {
@@ -1225,10 +1280,17 @@ export default function Admin() {
                             </span>
                           </td>
                           <td className="p-4">
-                            {p.price ? (
-                              <span className="font-bold text-gray-900">
-                                {p.price} ج.م
-                              </span>
+                            {p.sizePrices?.["50ML"] || p.price ? (
+                              <div>
+                                <span className="font-bold text-gray-900 block">
+                                  {p.sizePrices?.["50ML"] || p.price} ج.م
+                                </span>
+                                {p.sizePrices?.["100ML"] && (
+                                  <span className="text-[10px] text-gray-400 block font-normal">
+                                    100ML: {p.sizePrices["100ML"]} ج.م
+                                  </span>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-gray-400 text-xs">-</span>
                             )}
@@ -1335,42 +1397,119 @@ export default function Admin() {
                           <p className="font-semibold text-gray-900">
                             {order.customerName}
                           </p>
-                          <p className="text-xs text-gray-500" dir="ltr" style={{ textAlign: "right" }}>
-                            {order.customerPhone}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-2 whitespace-pre-wrap max-w-xs leading-relaxed">
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-gray-600 font-mono" dir="ltr">
+                              {order.customerPhone}
+                            </span>
+                            {order.customerPhone && (
+                              <a
+                                href={`https://wa.me/${order.customerPhone.replace(/[^0-9]/g, "")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-600 hover:text-green-700 p-0.5"
+                                title="محادثة واتساب"
+                              >
+                                <MessageCircle size={14} />
+                              </a>
+                            )}
+                          </div>
+                          {order.city && (
+                            <p className="text-xs text-gray-500 mt-1 font-medium">
+                              📍 {order.city}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1 whitespace-pre-wrap max-w-xs leading-relaxed">
                             {order.customerAddress}
                           </p>
+                          {order.notes && (
+                            <p className="text-[11px] text-amber-700 bg-amber-50 rounded p-1 mt-1 border border-amber-100">
+                              ملاحظة: {order.notes}
+                            </p>
+                          )}
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center gap-3">
-                            {(() => {
-                              const relatedProduct = products.find(p => p.id === order.productId);
-                              const img = order.productImage || relatedProduct?.image || relatedProduct?.images?.[0];
-                              if (img) {
-                                return (
-                                  <img 
-                                    src={img} 
-                                    alt="Product" 
-                                    onClick={() => setViewingImage(img)}
-                                    className="w-12 h-12 object-cover rounded-lg border border-gray-100 shrink-0 cursor-pointer hover:shadow-md transition-shadow" 
-                                  />
+                          {order.items && order.items.length > 0 ? (
+                            <div className="space-y-2 min-w-[220px]">
+                              {order.items.map((it, idx) => (
+                                <div key={idx} className="flex items-center gap-2 text-xs text-gray-800">
+                                  {it.image && (
+                                    <img
+                                      src={it.image}
+                                      alt=""
+                                      onClick={() => setViewingImage(it.image)}
+                                      className="w-8 h-8 rounded object-cover border border-gray-100 shrink-0 cursor-pointer"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-900 truncate">
+                                      {it.nameAr || it.nameEn}
+                                    </p>
+                                    <p className="text-[11px] text-gray-500">
+                                      {it.size ? `${it.size} ` : ""}× {it.quantity} = {it.price * it.quantity} ج.م
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+
+                              {/* Price verification and total display */}
+                              {(() => {
+                                const calculatedItemsSum = order.items.reduce(
+                                  (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
+                                  0
                                 );
-                              }
-                              return <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] shrink-0">لا صورة</div>;
-                            })()}
-                            <div>
-                              <p className="font-semibold text-gray-900 line-clamp-2">
-                                {order.productNameAr || order.productNameEn}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {order.size}{" "}
-                                {order.price !== "N/A"
-                                  ? `- ${order.price} جنيه`
-                                  : ""}
-                              </p>
+                                const expectedTotal = calculatedItemsSum + (Number(order.shippingCost) || 0);
+                                const isDiscrepancy =
+                                  order.totalAmount && Math.abs(expectedTotal - Number(order.totalAmount)) > 1;
+
+                                return (
+                                  <div className="pt-2 border-t border-gray-100 mt-1">
+                                    <div className="flex justify-between items-center text-xs font-bold text-gray-900">
+                                      <span>الإجمالي:</span>
+                                      <span className="text-yellow-700">
+                                        {order.totalAmount || calculatedItemsSum} ج.م
+                                      </span>
+                                    </div>
+                                    {isDiscrepancy && (
+                                      <div className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 p-1 rounded font-bold mt-1 border border-red-200">
+                                        <AlertTriangle size={12} className="shrink-0" />
+                                        <span>تنبيه: اختلاف بين الإجمالي ومجموع المنتجات!</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </div>
-                          </div>
+                          ) : (
+                            /* Legacy single-product order display */
+                            <div className="flex items-center gap-3">
+                              {(() => {
+                                const relatedProduct = products.find(p => p.id === order.productId);
+                                const img = order.productImage || relatedProduct?.image || relatedProduct?.images?.[0];
+                                if (img) {
+                                  return (
+                                    <img 
+                                      src={img} 
+                                      alt="Product" 
+                                      onClick={() => setViewingImage(img)}
+                                      className="w-12 h-12 object-cover rounded-lg border border-gray-100 shrink-0 cursor-pointer hover:shadow-md transition-shadow" 
+                                    />
+                                  );
+                                }
+                                return <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-[10px] shrink-0">لا صورة</div>;
+                              })()}
+                              <div>
+                                <p className="font-semibold text-gray-900 line-clamp-2">
+                                  {order.productNameAr || order.productNameEn}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {order.size}{" "}
+                                  {order.price !== "N/A"
+                                    ? `- ${order.price} جنيه`
+                                    : ""}
+                                </p>
+                              </div>
+                            </div>
+                          )}
                         </td>
                         <td className="p-4">
                           <span
