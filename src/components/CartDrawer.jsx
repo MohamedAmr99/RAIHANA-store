@@ -23,15 +23,14 @@ const CartDrawer = () => {
     cartCount,
   } = useCart();
 
-  const isFreeShipping = Boolean(
-    settings.freeShippingEnabled &&
-      (Number(settings.freeShippingThreshold) === 0 ||
-        cartSubtotal >= (Number(settings.freeShippingThreshold) || 0))
-  );
-
+  const freeShippingEnabled = Boolean(settings.freeShippingEnabled);
   const freeShippingThreshold = Number(settings.freeShippingThreshold) || 0;
+  const isFreeShipping =
+    freeShippingEnabled &&
+    (freeShippingThreshold === 0 || cartSubtotal >= freeShippingThreshold);
+
   const freeShippingRemaining =
-    settings.freeShippingEnabled && freeShippingThreshold > 0
+    freeShippingEnabled && freeShippingThreshold > 0
       ? Math.max(0, freeShippingThreshold - cartSubtotal)
       : 0;
 
@@ -206,30 +205,21 @@ const CartDrawer = () => {
                       {cartSubtotal} {lang === "ar" ? "جنيه" : "EGP"}
                     </span>
                   </div>
-                  {isFreeShipping ? (
-                    <div className="flex justify-between text-gray-400">
-                      <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
-                      <span className="font-bold text-green-400">
-                        {lang === "ar" ? "🎉 مجاناً" : "🎉 Free"}
-                      </span>
-                    </div>
-                  ) : shippingCost > 0 ? (
-                    <div className="flex justify-between text-gray-400">
-                      <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
-                      <span className="font-medium text-white">
-                        {shippingCost} {lang === "ar" ? "جنيه" : "EGP"}
-                      </span>
-                    </div>
-                  ) : null}
-
-                  {/* Free shipping progress & notice */}
-                  {settings.freeShippingEnabled && freeShippingRemaining > 0 && (
-                    <div className="py-1">
-                      <p className="text-[11px] text-yellow-400/90 font-medium mb-1">
-                        {lang === "ar"
-                          ? `أضف ${freeShippingRemaining} ج.م للحصول على شحن مجاني 🚚`
-                          : `Add ${freeShippingRemaining} EGP for free shipping 🚚`}
-                      </p>
+                  {/* Free shipping banner / progress in cart */}
+                  {freeShippingEnabled && freeShippingRemaining > 0 && (
+                    <div className="p-2.5 bg-gold/10 rounded-xl border border-gold/20 my-2">
+                      <div className="flex justify-between items-center text-[11px] font-bold text-gold mb-1.5">
+                        <span>
+                          {lang === "ar"
+                            ? `متبقي ${freeShippingRemaining} ج.م للشحن المجاني! 🚚`
+                            : `Add ${freeShippingRemaining} EGP for FREE shipping! 🚚`}
+                        </span>
+                        <span>
+                          {Math.round(
+                            Math.min(100, (cartSubtotal / freeShippingThreshold) * 100)
+                          )}%
+                        </span>
+                      </div>
                       <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-gold h-full rounded-full transition-all duration-300"
@@ -244,10 +234,24 @@ const CartDrawer = () => {
                     </div>
                   )}
 
+                  {isFreeShipping ? (
+                    <div className="flex justify-between text-emerald-400 font-bold">
+                      <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
+                      <span>{lang === "ar" ? "🎉 مجاناً" : "🎉 Free"}</span>
+                    </div>
+                  ) : shippingCost > 0 ? (
+                    <div className="flex justify-between text-gray-400">
+                      <span>{lang === "ar" ? "الشحن" : "Shipping"}</span>
+                      <span className="font-medium text-white">
+                        {shippingCost} {lang === "ar" ? "جنيه" : "EGP"}
+                      </span>
+                    </div>
+                  ) : null}
+
                   {!isFreeShipping && (
                     <p className="text-[11px] text-gray-500 italic">
                       {lang === "ar"
-                        ? "⚠️ سعر الشحن يُحدَّد حسب المحافظة عند الدفع"
+                        ? "⚠️ سعر الشحن النهائي يُحدَّد حسب المحافظة عند الدفع"
                         : "⚠️ Exact shipping calculated at checkout by city"}
                     </p>
                   )}

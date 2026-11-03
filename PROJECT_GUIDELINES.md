@@ -318,3 +318,57 @@ const handleSubmit = useCallback(async (e) => {
 
 **القاعدة المستفادة:**
 > ✅ في Tailwind v4 — تحقق دائماً من وجود كلاس قياسي قبل استخدام الـ arbitrary value `[]`.
+
+---
+
+### 🔴 BUG-06: تشوه أزرار التبديل (Toggle Switch) في واجهات الـ RTL
+**الملف:** `Admin.jsx`
+
+**السبب:**
+الصفحة تعمل باتجاه `dir="rtl"`. تطبيق `translate-x` على دائرة المفتاح يغير اتجاه الحركة أو يحسب الإزاحة خارج إطار الزر البيضاوي فتخرج الكرة البيضاء بعيداً عنه في منتصف الشاشة.
+
+**الحل:**
+عزل حاوية المفتاح صراحة بـ `dir="ltr"` مع استخدام حشوة هندسية دقيقة:
+```jsx
+<div dir="ltr" className="inline-flex items-center">
+  <button
+    type="button"
+    onClick={toggle}
+    className="relative inline-flex h-8 w-15 rounded-full p-1 transition-colors"
+  >
+    <span className={`inline-block h-6 w-6 rounded-full bg-white shadow transition-transform ${
+      enabled ? "translate-x-7" : "translate-x-0"
+    }`} />
+  </button>
+</div>
+```
+
+**القاعدة المستفادة:**
+> ✅ أي Toggle Switch مبني بتحريك الـ X-axis يجب أن يُغلف صراحة بـ `dir="ltr"` لمنع تضارب الـ RTL.
+
+---
+
+### 🔴 BUG-07: رفض Firestore للحفظ بصمت بسبب قيم `undefined`
+**الملف:** `useSettings.js`
+
+**السبب:**
+عند إفراغ حقل نصي أو تركه بدون قيمة يُسند `undefined`. مكتبة Firebase SDK ترفض رفضاً قاطعاً كتابة أي مستند يحوي مفاتيح بقيمة `undefined` وترمي `Unsupported field value: undefined` مما يمنع الحفظ.
+
+**الحل:**
+تنظيف الكائن قبل إرساله إلى `setDoc`:
+```javascript
+const sanitizeFirestoreData = (data) => {
+  if (Array.isArray(data)) return data.map(sanitizeFirestoreData);
+  if (data !== null && typeof data === 'object') {
+    const clean = {};
+    for (const [k, v] of Object.entries(data)) {
+      if (v !== undefined) clean[k] = sanitizeFirestoreData(v);
+    }
+    return clean;
+  }
+  return data;
+};
+```
+
+**القاعدة المستفادة:**
+> ✅ لا ترسل أي كائن مباشرة إلى Firestore دون التأكد من خلوه من قيم `undefined`.

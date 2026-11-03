@@ -24,6 +24,23 @@ const DEFAULT_SETTINGS = {
   ],
 };
 
+// Helper function to safely strip undefined values so Firestore never rejects the write
+const sanitizeFirestoreData = (data) => {
+  if (Array.isArray(data)) {
+    return data.map(sanitizeFirestoreData);
+  }
+  if (data !== null && typeof data === 'object') {
+    const clean = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        clean[key] = sanitizeFirestoreData(value);
+      }
+    }
+    return clean;
+  }
+  return data;
+};
+
 export const useSettings = () => {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -46,7 +63,8 @@ export const useSettings = () => {
 
   const saveSettings = async (newSettings) => {
     const ref = doc(db, 'settings', 'store');
-    await setDoc(ref, newSettings, { merge: true });
+    const cleaned = sanitizeFirestoreData(newSettings);
+    await setDoc(ref, cleaned, { merge: true });
   };
 
   return { settings, loading, saveSettings };

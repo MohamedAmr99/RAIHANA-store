@@ -732,16 +732,32 @@ const SettingsTab = () => {
   const { settings, saveSettings } = useSettings();
   const [form, setForm] = useState(settings);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     setForm(settings);
   }, [settings]);
 
   const handleSave = async (e) => {
-    e.preventDefault();
-    await saveSettings(form);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (e) e.preventDefault();
+    setSaving(true);
+    setSaveError("");
+    try {
+      const payload = {
+        ...form,
+        freeShippingEnabled: Boolean(form.freeShippingEnabled),
+        freeShippingThreshold: Number(form.freeShippingThreshold) || 0,
+      };
+      await saveSettings(payload);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      setSaveError(err.message || "حدث خطأ أثناء حفظ الإعدادات");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const setF = (key, val) => setForm((p) => ({ ...p, [key]: val }));
@@ -749,15 +765,25 @@ const SettingsTab = () => {
   // ─── Shipping rates helpers ───────────────────────────────────────────────────
   const shippingRates = form.shippingRates || {};
   const setRate = (city, val) =>
-    setForm((p) => ({
-      ...p,
-      shippingRates: { ...(p.shippingRates || {}), [city]: val === "" ? undefined : Number(val) },
-    }));
+    setForm((p) => {
+      const updated = { ...(p.shippingRates || {}) };
+      if (val === "" || val === undefined) {
+        delete updated[city];
+      } else {
+        updated[city] = Number(val);
+      }
+      return { ...p, shippingRates: updated };
+    });
   const setDefaultRate = (val) =>
-    setForm((p) => ({
-      ...p,
-      shippingRates: { ...(p.shippingRates || {}), default: val === "" ? undefined : Number(val) },
-    }));
+    setForm((p) => {
+      const updated = { ...(p.shippingRates || {}) };
+      if (val === "" || val === undefined) {
+        delete updated["default"];
+      } else {
+        updated["default"] = Number(val);
+      }
+      return { ...p, shippingRates: updated };
+    });
 
   const fields = [
     {
@@ -845,55 +871,131 @@ const SettingsTab = () => {
             اتركها فارغة لاستخدام السعر الافتراضي. السعر بالجنيه المصري.
           </p>
 
-          {/* ─── Free Shipping Toggle ─────────────────────────────────────────── */}
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
-            <div className="flex items-center justify-between mb-3">
+          {/* ─── Free Shipping Section ─────────────────────────────────────────── */}
+          <div className="mb-6 p-5 bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-200/60">
               <div>
-                <h4 className="font-bold text-green-800 text-sm">🎉 التوصيل المجاني</h4>
-                <p className="text-xs text-green-600 mt-0.5">
-                  عند التفعيل يظهر "توصيل مجاني" للعملاء المؤهلين
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎁</span>
+                  <h4 className="font-bold text-emerald-950 text-base">عرض التوصيل المجاني</h4>
+                  <span
+                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                      form.freeShippingEnabled
+                        ? "bg-emerald-600 text-white"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {form.freeShippingEnabled ? "مفعّل 🟢" : "معطّل ⚪"}
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-800 mt-1">
+                  تفعيل شحن مجاني للطلبات المؤهلة مع إظهار شريط التقدم للعميل في السلة وصفحة الدفع
                 </p>
               </div>
-              {/* Toggle Switch */}
-              <button
-                type="button"
-                onClick={() => setF("freeShippingEnabled", !form.freeShippingEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
-                  form.freeShippingEnabled ? "bg-green-500" : "bg-gray-300"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-300 ${
-                    form.freeShippingEnabled ? "translate-x-6" : "translate-x-1"
+
+              {/* Toggle Switch with strict LTR isolation */}
+              <div dir="ltr" className="inline-flex items-center self-start sm:self-center">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={Boolean(form.freeShippingEnabled)}
+                  onClick={() => setF("freeShippingEnabled", !form.freeShippingEnabled)}
+                  className={`relative inline-flex h-8 w-15 shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                    form.freeShippingEnabled ? "bg-emerald-600" : "bg-gray-300"
                   }`}
-                />
-              </button>
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ease-in-out ${
+                      form.freeShippingEnabled ? "translate-x-7" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
 
-            {/* Threshold input — only shown when enabled */}
+            {/* Free Shipping Options when enabled */}
             {form.freeShippingEnabled && (
-              <div className="flex items-center gap-3 mt-2 pt-3 border-t border-green-200">
-                <label className="text-sm font-semibold text-green-800 shrink-0">
-                  الحد الأدنى للطلب:
+              <div className="pt-4 space-y-3">
+                <label className="block text-xs font-bold text-emerald-950">
+                  شروط الاستحقاق للشحن المجاني:
                 </label>
-                <input
-                  type="number"
-                  min="0"
-                  dir="ltr"
-                  value={form.freeShippingThreshold ?? ""}
-                  onChange={(e) =>
-                    setF("freeShippingThreshold", e.target.value === "" ? 0 : Number(e.target.value))
-                  }
-                  placeholder="0"
-                  className="w-28 p-2 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-sm text-center"
-                />
-                <span className="text-xs text-green-700">جنيه</span>
-                <p className="text-xs text-green-600">
-                  {Number(form.freeShippingThreshold) === 0
-                    ? "✅ مجاني لجميع الطلبات"
-                    : `الطلبات فوق ${form.freeShippingThreshold} جنيه = شحن مجاني`}
-                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Option 1: Free for all */}
+                  <button
+                    type="button"
+                    onClick={() => setF("freeShippingThreshold", 0)}
+                    className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
+                      Number(form.freeShippingThreshold) === 0
+                        ? "bg-white border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 font-bold shadow-sm"
+                        : "bg-white/60 border-emerald-200 text-emerald-800 hover:bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">🌟 مجاني لجميع الطلبات</span>
+                      {Number(form.freeShippingThreshold) === 0 && (
+                        <span className="text-emerald-600 text-xs font-bold">✓ محدد</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      توصيل مجاني 100% بدون أي حد أدنى للشراء
+                    </p>
+                  </button>
+
+                  {/* Option 2: Above specific threshold */}
+                  <div
+                    className={`p-3 rounded-xl border text-right transition-all ${
+                      Number(form.freeShippingThreshold) > 0
+                        ? "bg-white border-emerald-500 ring-2 ring-emerald-500/30 shadow-sm"
+                        : "bg-white/60 border-emerald-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-bold text-emerald-950">📦 حد أدنى للطلب</span>
+                      {Number(form.freeShippingThreshold) > 0 && (
+                        <span className="text-emerald-600 text-xs font-bold">✓ محدد</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        dir="ltr"
+                        value={Number(form.freeShippingThreshold) > 0 ? form.freeShippingThreshold : ""}
+                        onChange={(e) => {
+                          const val = e.target.value === "" ? 0 : Math.max(0, Number(e.target.value));
+                          setF("freeShippingThreshold", val);
+                        }}
+                        placeholder="مثال: 1000"
+                        className="w-28 p-2 border border-gray-300 rounded-lg text-sm text-center font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                      />
+                      <span className="text-xs text-gray-600 font-medium">جنيه مصري فما فوق</span>
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Quick Save notice / button */}
+            <div className="mt-4 pt-3 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] text-emerald-800">
+                💡 تأكد من الضغط على زر <strong>حفظ الإعدادات</strong> لاعتماد التغييرات على المتجر.
+              </p>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                  saved
+                    ? "bg-emerald-600 text-white"
+                    : "bg-emerald-700 hover:bg-emerald-800 text-white"
+                }`}
+              >
+                {saving ? "جاري الحفظ..." : saved ? "✓ تم الحفظ بنجاح!" : "💾 حفظ إعدادات الشحن الآن"}
+              </button>
+            </div>
+            {saveError && (
+              <p className="text-xs text-red-600 font-bold mt-2">⚠️ {saveError}</p>
             )}
           </div>
 
@@ -934,13 +1036,23 @@ const SettingsTab = () => {
           </div>
         </div>
 
-        <div className="pt-4 border-t">
+        <div className="pt-4 border-t space-y-2">
+          {saveError && (
+            <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg border border-red-200">
+              ⚠️ {saveError}
+            </p>
+          )}
           <button
             type="submit"
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${saved ? "bg-green-500 text-white" : "bg-gray-900 text-white hover:bg-yellow-500"}`}
+            disabled={saving}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-medium transition-all duration-300 cursor-pointer disabled:opacity-50 ${
+              saved
+                ? "bg-green-600 text-white"
+                : "bg-gray-900 text-white hover:bg-yellow-500 hover:text-black"
+            }`}
           >
             <Save size={16} />
-            {saved ? "✓ تم الحفظ بنجاح!" : "حفظ الإعدادات"}
+            {saving ? "جاري حفظ كل الإعدادات..." : saved ? "✓ تم حفظ جميع الإعدادات بنجاح!" : "حفظ الإعدادات"}
           </button>
         </div>
       </form>

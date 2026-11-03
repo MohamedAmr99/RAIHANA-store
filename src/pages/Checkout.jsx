@@ -77,15 +77,21 @@ const Checkout = () => {
     notes: "",
   });
 
+  // ─── Free Shipping Status Check ─────────────────────────────────────────────
+  const isFreeShipping = useMemo(() => {
+    if (!settings.freeShippingEnabled) return false;
+    const threshold = Number(settings.freeShippingThreshold) || 0;
+    return threshold === 0 || subtotal >= threshold;
+  }, [settings.freeShippingEnabled, settings.freeShippingThreshold, subtotal]);
+
   // ─── Reactive shipping cost — with free-shipping logic ──────────────────────
   const shippingCost = useMemo(() => {
-    // 1. Free shipping: if enabled AND subtotal >= threshold (0 threshold = always free)
-    if (settings.freeShippingEnabled) {
-      const threshold = Number(settings.freeShippingThreshold) || 0;
-      if (subtotal >= threshold) return 0;
-    }
+    // 1. Free shipping unlocked
+    if (isFreeShipping) return 0;
+
     // 2. No city selected → fall back to flat shippingFee
     if (!formData.city) return Number(settings.shippingFee) || 0;
+
     // 3. Per-city rate lookup
     const rates = settings.shippingRates || {};
     const cityRate = rates[formData.city];
@@ -93,7 +99,7 @@ const Checkout = () => {
     const defaultRate = rates["default"];
     if (defaultRate !== undefined) return Number(defaultRate);
     return Number(settings.shippingFee) || 0;
-  }, [formData.city, settings, subtotal]);
+  }, [isFreeShipping, formData.city, settings.shippingRates, settings.shippingFee]);
 
   // Helper: how much more to spend to unlock free shipping
   const freeShippingRemaining = useMemo(() => {
