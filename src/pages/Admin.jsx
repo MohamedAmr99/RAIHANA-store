@@ -762,6 +762,29 @@ const SettingsTab = () => {
 
   const setF = (key, val) => setForm((p) => ({ ...p, [key]: val }));
 
+  // ─── Instant Auto-Save for critical promotion settings ───────────────────────
+  const updateAndSaveField = async (key, val) => {
+    const updatedForm = { ...form, [key]: val };
+    setForm(updatedForm);
+    setSaving(true);
+    setSaveError("");
+    try {
+      const payload = {
+        ...updatedForm,
+        freeShippingEnabled: Boolean(updatedForm.freeShippingEnabled),
+        freeShippingThreshold: Number(updatedForm.freeShippingThreshold) || 0,
+      };
+      await saveSettings(payload);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      console.error("Auto-save error:", err);
+      setSaveError(err.message || "حدث خطأ أثناء الحفظ التلقائي في قاعدة البيانات");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ─── Shipping rates helpers ───────────────────────────────────────────────────
   const shippingRates = form.shippingRates || {};
   const setRate = (city, val) =>
@@ -893,14 +916,15 @@ const SettingsTab = () => {
                 </p>
               </div>
 
-              {/* Toggle Switch with strict LTR isolation */}
-              <div dir="ltr" className="inline-flex items-center self-start sm:self-center">
+              {/* Toggle Switch with strict LTR isolation & auto-save */}
+              <div dir="ltr" className="inline-flex items-center self-start sm:self-center gap-2">
                 <button
                   type="button"
                   role="switch"
+                  disabled={saving}
                   aria-checked={Boolean(form.freeShippingEnabled)}
-                  onClick={() => setF("freeShippingEnabled", !form.freeShippingEnabled)}
-                  className={`relative inline-flex h-8 w-15 shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+                  onClick={() => updateAndSaveField("freeShippingEnabled", !form.freeShippingEnabled)}
+                  className={`relative inline-flex h-8 w-15 shrink-0 cursor-pointer rounded-full p-1 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 ${
                     form.freeShippingEnabled ? "bg-emerald-600" : "bg-gray-300"
                   }`}
                 >
@@ -924,7 +948,7 @@ const SettingsTab = () => {
                   {/* Option 1: Free for all */}
                   <button
                     type="button"
-                    onClick={() => setF("freeShippingThreshold", 0)}
+                    onClick={() => updateAndSaveField("freeShippingThreshold", 0)}
                     className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                       Number(form.freeShippingThreshold) === 0
                         ? "bg-white border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 font-bold shadow-sm"
@@ -966,6 +990,10 @@ const SettingsTab = () => {
                           const val = e.target.value === "" ? 0 : Math.max(0, Number(e.target.value));
                           setF("freeShippingThreshold", val);
                         }}
+                        onBlur={(e) => {
+                          const val = e.target.value === "" ? 0 : Math.max(0, Number(e.target.value));
+                          updateAndSaveField("freeShippingThreshold", val);
+                        }}
                         placeholder="مثال: 1000"
                         className="w-28 p-2 border border-gray-300 rounded-lg text-sm text-center font-bold bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
@@ -979,7 +1007,7 @@ const SettingsTab = () => {
             {/* Quick Save notice / button */}
             <div className="mt-4 pt-3 border-t border-emerald-200/60 flex flex-wrap items-center justify-between gap-2">
               <p className="text-[11px] text-emerald-800">
-                💡 تأكد من الضغط على زر <strong>حفظ الإعدادات</strong> لاعتماد التغييرات على المتجر.
+                ⚡ الحفظ يتم <strong>تلقائياً وفورياً</strong> عند الضغط على المفتاح أو تغيير القيمة.
               </p>
               <button
                 type="button"
@@ -991,7 +1019,7 @@ const SettingsTab = () => {
                     : "bg-emerald-700 hover:bg-emerald-800 text-white"
                 }`}
               >
-                {saving ? "جاري الحفظ..." : saved ? "✓ تم الحفظ بنجاح!" : "💾 حفظ إعدادات الشحن الآن"}
+                {saving ? "جاري الحفظ..." : saved ? "✓ تم الحفظ بنجاح!" : "💾 حفظ يدوي الآن"}
               </button>
             </div>
             {saveError && (
