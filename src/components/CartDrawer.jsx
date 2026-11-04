@@ -74,13 +74,13 @@ const CartDrawer = () => {
             animate={{ x: 0 }}
             exit={{ x: isRtl ? "-100%" : "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className={`relative ml-auto w-full max-w-md bg-[#0d0d0d] text-white shadow-2xl flex flex-col h-full ${
+            className={`relative ml-auto w-full max-w-md bg-black text-white shadow-2xl flex flex-col h-full ${
               isRtl ? "border-r" : "border-l"
             } border-gold/20 z-50`}
             style={{ [isRtl ? "marginRight" : "marginLeft"]: "auto" }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#121212]">
+            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-zinc-950">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
                   <ShoppingBag size={20} />
@@ -163,7 +163,7 @@ const CartDrawer = () => {
                           {itemName}
                         </h4>
                         {item.size && (
-                          <span className="inline-block text-[11px] font-bold text-gold/80 bg-gold/10 px-2 py-0.5 rounded-md mt-1">
+                          <span className="inline-block text-xs font-bold text-gold/80 bg-gold/10 px-2 py-0.5 rounded-md mt-1">
                             {item.size}
                           </span>
                         )}
@@ -208,7 +208,7 @@ const CartDrawer = () => {
 
             {/* Footer / Summary */}
             {cart.length > 0 && (
-              <div className="p-6 border-t border-white/10 bg-[#121212] space-y-4">
+              <div className="p-6 border-t border-white/10 bg-zinc-950 space-y-4">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-400">
                     <span>{lang === "ar" ? "المجموع الفرعي" : "Subtotal"}</span>
@@ -219,7 +219,7 @@ const CartDrawer = () => {
                   {/* Free shipping banner / progress in cart */}
                   {freeShippingEnabled && (
                     isFreeShipping ? (
-                      <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 my-2 shadow-xs">
+                      <div className="p-2.5 bg-emerald-500/10 rounded-xl border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 my-2 shadow-sm">
                         <Sparkles size={16} className="shrink-0 text-emerald-400" />
                         <span>
                           {lang === "ar"
@@ -229,7 +229,7 @@ const CartDrawer = () => {
                       </div>
                     ) : freeShippingRemaining > 0 ? (
                       <div className="p-2.5 bg-gold/10 rounded-xl border border-gold/20 my-2">
-                        <div className="flex justify-between items-center text-[11px] font-bold text-gold mb-1.5">
+                        <div className="flex justify-between items-center text-xs font-bold text-gold mb-1.5">
                           <span>
                             {lang === "ar"
                               ? `متبقي ${freeShippingRemaining} ج.م للشحن المجاني! 🚚`
@@ -271,7 +271,7 @@ const CartDrawer = () => {
                   ) : null}
 
                   {!isFreeShipping && (
-                    <p className="text-[11px] text-gray-500 italic">
+                    <p className="text-xs text-gray-500 italic">
                       {lang === "ar"
                         ? "⚠️ سعر الشحن النهائي يُحدَّد حسب المحافظة عند الدفع"
                         : "⚠️ Exact shipping calculated at checkout by city"}
@@ -287,7 +287,7 @@ const CartDrawer = () => {
 
                 <button
                   onClick={handleCheckout}
-                  className="w-full py-4 rounded-xl bg-gold hover:bg-gold/90 text-black font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] cursor-pointer"
+                  className="w-full py-4 rounded-xl bg-gold hover:bg-gold/90 text-black font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-xl cursor-pointer"
                 >
                   <span>{lang === "ar" ? "إتمام الشراء" : "Proceed to Checkout"}</span>
                   {isRtl ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
